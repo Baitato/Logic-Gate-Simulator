@@ -4,7 +4,7 @@ export class GateActions {
   }
 
   assertArgLength(length, ...args) {
-    console.log("Invalid inputs for type " + this.gate + " : " + args);
+    console.error("Invalid inputs for type " + this.gate + " : " + args);
     return false;
   }
 
