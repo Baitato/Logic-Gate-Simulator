@@ -1,6 +1,19 @@
 import { Container, Graphics } from "pixi.js";
 import { SideMenuButton } from "./sideMenuButton";
 
+const sideMenuElementNames = [
+  "select",
+  "eraser",
+  "wire",
+  "and",
+  "nand",
+  "not",
+  "or",
+  "nor",
+  "xor",
+  "xnor",
+];
+
 const sideMenu = new Container();
 
 const sideMenuContainerGraphics = new Graphics()
@@ -24,23 +37,11 @@ export function addSideMenuElement(sprite, position) {
   sideMenu.addChild(sprite);
 }
 
-let sideMenuElements = [
-  "select",
-  "eraser",
-  "wire",
-  "and",
-  "nand",
-  "not",
-  "or",
-  "nor",
-  "xor",
-  "xnor",
-];
+const sideMenuElements = new Map();
 
-for (let i = 0; i < sideMenuElements.length; i++) {
-  const sideMenuButton = new SideMenuButton(
-    "assets/56x56/" + sideMenuElements[i] + ".svg"
-  );
+for (let i = 0; i < sideMenuElementNames.length; i++) {
+  const sideMenuButton = new SideMenuButton(sideMenuElementNames[i]);
+  sideMenuElements.set(sideMenuElementNames[i], sideMenuButton);
   addSideMenuElement(sideMenuButton.getSprite(), i + 1);
 }
 
