@@ -3,6 +3,8 @@ import { loadTexture } from "../assetLoader/assetLoading";
 import { app } from "../app";
 
 export class LogicGate extends Container {
+  static selectedGate = null; // Static property to track the currently selected gate
+
   constructor(type) {
     super();
     this.type = type;
@@ -10,6 +12,7 @@ export class LogicGate extends Container {
     this.rotationHandle = null; // Rotation handle
     this.gateSprite = null; // Main gate sprite
 
+    // Variables for rotation drag state
     this._startPointerAngle = 0;
     this._startRotation = 0;
 
@@ -17,6 +20,7 @@ export class LogicGate extends Container {
   }
 
   async setupGate() {
+    // Load texture and setup sprite
     const texture = await loadTexture(this.type);
     this.gateSprite = new Sprite(texture);
     this.gateSprite.anchor.set(0.5);
@@ -27,13 +31,31 @@ export class LogicGate extends Container {
   }
 
   onGateClick() {
+    // Deselect the previously selected gate (if any)
+    if (LogicGate.selectedGate && LogicGate.selectedGate !== this) {
+      LogicGate.selectedGate.deselect();
+    }
+
+    // Toggle selection for the current gate
     this.selected = !this.selected;
+    this.updateSelectionUI();
+
+    // Update the static reference to the currently selected gate
+    if (this.selected) {
+      LogicGate.selectedGate = this;
+    } else {
+      LogicGate.selectedGate = null;
+    }
+  }
+
+  deselect() {
+    this.selected = false;
     this.updateSelectionUI();
   }
 
   updateSelectionUI() {
     if (this.selected) {
-
+      // Create rotation handle if it doesn't exist
       if (!this.rotationHandle) {
         this.rotationHandle = new Graphics();
         const handleSize = 15;
@@ -43,11 +65,12 @@ export class LogicGate extends Container {
         this.rotationHandle.endFill();
         this.rotationHandle.eventMode = "static";
         this.rotationHandle.cursor = "pointer";
+        this.rotationHandle.zIndex = -10;
         this.rotationHandle.on(
           "pointerdown",
           this.onRotationHandleClick.bind(this)
         );
-
+        // Add to the gate container
         this.addChild(this.rotationHandle);
         console.log("Rotation handle created and added to gate.");
       }
@@ -55,7 +78,7 @@ export class LogicGate extends Container {
       // Remove rotation handle if not selected
       if (this.rotationHandle) {
         this.removeChild(this.rotationHandle);
-        this.rotationHandle.destroy();
+        this.rotationHandle.destroy(); // Clean up the handle
         this.rotationHandle = null;
         console.log("Rotation handle removed and destroyed.");
       }
@@ -63,7 +86,7 @@ export class LogicGate extends Container {
   }
 
   onRotationHandleClick(event) {
-    event.stopPropagation();
+    event.stopPropagation(); // Prevent gate click
 
     // Store initial rotation and pointer angle (in local coordinates)
     this._startRotation = this.rotation;
@@ -95,6 +118,7 @@ export class LogicGate extends Container {
         Math.round(this.rotation / (Math.PI / 2)) * (Math.PI / 2);
       this.rotation = snappedRotation;
 
+      // Clean up event listeners
       app.stage.off("pointermove", onPointerMove);
       app.stage.off("pointerup", onPointerUp);
       console.log("Rotation ended. Rotation snapped to 90-degree increment.");
@@ -105,6 +129,7 @@ export class LogicGate extends Container {
   }
 
   smoothRotation(currentRotation, targetRotation, smoothingFactor = 0.2) {
+    // Apply linear interpolation (lerp) for smooth rotation
     return (
       currentRotation + (targetRotation - currentRotation) * smoothingFactor
     );
