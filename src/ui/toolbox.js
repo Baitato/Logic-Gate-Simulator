@@ -1,7 +1,8 @@
 import { ScrollBox } from "@pixi/ui";
-import { Container, Graphics, Assets, Sprite } from "pixi.js";
+import { Container, Graphics } from "pixi.js";
 import { onToolClick } from "../world-objects/toolHandler";
 import { loadSprite } from "../assetLoader/assetLoading";
+import { gates } from "../constants/constants";
 
 const toolboxWidth = 150;
 const toolboxHeight = 0.98 * window.innerHeight;
@@ -22,18 +23,9 @@ const toolboxBackground = new Graphics()
 
 toolboxContainer.addChild(toolboxBackground);
 
-const sideMenuElementNames = [
-  "select",
-  "eraser",
-  "wire",
-  "and",
-  "nand",
-  "not",
-  "or",
-  "nor",
-  "xor",
-  "xnor",
-];
+const sideMenuElementNames = ["select", "eraser", "wire"];
+
+sideMenuElementNames.push(...gates);
 
 async function createToolbox() {
   const items = await Promise.all(

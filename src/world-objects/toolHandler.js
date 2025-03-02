@@ -5,9 +5,9 @@ import { save } from "./objectManager";
 
 let gateMoveEvent, gatePlaceEvent, currentSprite;
 
-export function onToolClick(event, gate) {
+export function onToolClick(event, tool) {
   cleanupPreviousTool();
-  onGateClick(event, gate);
+  onGateClick(event, tool);
 }
 
 function cleanupPreviousTool() {
@@ -43,8 +43,11 @@ async function onGateClick(event, gate) {
   currentSprite = sprite;
 
   viewport.addChild(sprite);
-  gateMoveEvent = (event) => onGateMove(event, sprite);
-  viewport.on("pointermove", gateMoveEvent);
+
+  if (gateMoveEvent == null) {
+    gateMoveEvent = (event) => onGateMove(event, sprite);
+    viewport.on("pointermove", gateMoveEvent);
+  }
 }
 
 function moveRelativeToMouseOnViewport(event, sprite) {
@@ -57,8 +60,10 @@ function moveRelativeToMouseOnViewport(event, sprite) {
 
 function onGateMove(event, sprite) {
   moveRelativeToMouseOnViewport(event, sprite);
-  gatePlaceEvent = (event) => onGatePlace(event, sprite);
-  viewport.on("pointerdown", gatePlaceEvent);
+  if (gatePlaceEvent == null) {
+    gatePlaceEvent = (event) => onGatePlace(event, sprite);
+    viewport.on("pointerdown", gatePlaceEvent);
+  }
 }
 
 function onGatePlace(event, sprite) {
