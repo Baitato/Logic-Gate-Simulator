@@ -2,7 +2,8 @@ import { viewport } from "./viewportModule";
 import { app } from "./app";
 import { grid } from "./grid";
 import { Sprite, Assets } from "pixi.js";
-import { sideMenu } from "./sidemenu/sideMenu";
+// import { sideMenu } from "./sidemenu/sideMenu";
+import { toolboxContainer } from "./ui/toolBox";
 
 app.stage.addChild(viewport);
 viewport.addChild(grid);
@@ -18,4 +19,5 @@ sprite.x = 0;
 sprite.y = 0;
 
 viewport.addChild(sprite);
-app.stage.addChild(sideMenu);
+// app.stage.addChild(sideMenu);
+app.stage.addChild(toolboxContainer);
