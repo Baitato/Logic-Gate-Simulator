@@ -17,10 +17,18 @@ function resetViewport() {
   viewport.setZoom(1, true); // Reset zoom to default (1:1 scale)
 }
 
+function handleResize() {
+  app.renderer.resize(window.innerWidth, window.innerHeight);
+  viewport.screenWidth = window.innerWidth;
+  viewport.screenHeight = window.innerHeight;
+}
+
+window.addEventListener("resize", handleResize);
+
 document.addEventListener("keydown", function (event) {
   if (event.code === "Space") {
     event.preventDefault(); // Prevent default spacebar action (e.g., page scroll)
-    resetViewport(); // Call the function to reset the viewport
+    resetViewport();
   }
 });
 
