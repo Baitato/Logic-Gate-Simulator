@@ -1,6 +1,6 @@
 import { app } from "./app";
 import { Graphics } from "pixi.js";
-import { viewport } from "./viewportModule";
+import { viewport } from "./viewport";
 
 const grid = new Graphics();
 

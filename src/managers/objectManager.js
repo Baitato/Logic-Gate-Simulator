@@ -1,3 +1,5 @@
+import { viewport } from "../core/viewport";
+import { LogicGate } from "../entities/logicGate";
 const gatePositions = new Map();
 
 function getKey(x, y) {
@@ -5,6 +7,9 @@ function getKey(x, y) {
 }
 
 function addObject(x, y, obj) {
+  const newGate = new LogicGate(obj);
+  newGate.initialize(x, y);
+  viewport.addChild(newGate);
   const key = getKey(x, y);
   gatePositions.set(key, obj);
 }
@@ -16,5 +21,4 @@ function getObject(x, y) {
 
 export function save(x, y, gate) {
   addObject(x, y, gate);
-  console.log(getObject(x, y));
 }

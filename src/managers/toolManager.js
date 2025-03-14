@@ -1,6 +1,6 @@
-import { viewport } from "../viewportModule";
+import { viewport } from "../core/viewport";
 import { Sprite } from "pixi.js";
-import { loadTexture } from "../assetLoader/assetLoading";
+import { loadTexture } from "./assetManager";
 import { save } from "./objectManager";
 
 let gateMoveEvent, gatePlaceEvent, currentSprite;
@@ -69,9 +69,11 @@ function onGateMove(event, sprite) {
 function onGatePlace(event, sprite) {
   moveRelativeToMouseOnViewport(event, sprite);
 
-  sprite.alpha = 1;
-
   save(sprite.x, sprite.y, sprite.gate);
+
+  viewport.removeChild(sprite);
+  sprite.destroy({ children: true, baseTexture: true });
+  sprite = null;
 
   viewport.off("pointermove", gateMoveEvent);
   viewport.off("pointerdown", gatePlaceEvent);

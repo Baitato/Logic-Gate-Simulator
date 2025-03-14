@@ -1,3 +1,6 @@
+// Update imports from world-objects to entities
+import { ConnectionManager } from "../managers/connectionManager";
+
 export class GateActions {
   constructor(gate) {
     this.gate = gate;

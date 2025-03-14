@@ -13,8 +13,8 @@ const viewport = new Viewport({
 });
 
 function resetViewport() {
-  viewport.moveCenter(0, 0); // Center the viewport at (0, 0)
-  viewport.setZoom(1, true); // Reset zoom to default (1:1 scale)
+  viewport.moveCenter(0, 0);
+  viewport.setZoom(1, true);
 }
 
 function handleResize() {
@@ -27,9 +27,14 @@ window.addEventListener("resize", handleResize);
 
 document.addEventListener("keydown", function (event) {
   if (event.code === "Space") {
-    event.preventDefault(); // Prevent default spacebar action (e.g., page scroll)
+    event.preventDefault();
     resetViewport();
   }
+});
+
+viewport.on("pointerdown", (event) => {
+  const worldPos = viewport.toWorld(event.data.global.x, event.data.global.y);
+  console.log("Mouse Position in Viewport:", worldPos);
 });
 
 resetViewport();

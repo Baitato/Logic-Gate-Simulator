@@ -1,8 +1,8 @@
 import { ScrollBox } from "@pixi/ui";
 import { Container, Graphics } from "pixi.js";
-import { onToolClick } from "../world-objects/toolHandler";
-import { loadSprite } from "../assetLoader/assetLoading";
-import { gates } from "../constants/constants";
+import { onToolClick } from "../managers/toolManager";
+import { loadSprite } from "../managers/assetManager";
+import { gates } from "../utils/constants";
 
 const toolboxWidth = 150;
 const toolboxHeight = 0.98 * window.innerHeight;

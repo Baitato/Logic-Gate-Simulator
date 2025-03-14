@@ -1,8 +1,8 @@
-import { viewport } from "./viewportModule";
-import { app } from "./app";
-import { grid } from "./grid";
-import { toolboxContainer } from "./ui/toolBox";
-import { LogicGate } from "./world-objects/logicGate";
+import { viewport } from "./core/viewport";
+import { app } from "./core/app";
+import { grid } from "./core/grid";
+import { toolboxContainer } from "./components/toolbox";
+import { LogicGate } from "./entities/logicGate";
 
 app.stage.addChild(viewport);
 viewport.addChild(grid);
