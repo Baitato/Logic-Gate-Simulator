@@ -22,7 +22,7 @@ function cleanupPreviousTool() {
   }
 
   if (gatePlaceEvent) {
-    viewport.off("pointerdown", gatePlaceEvent);
+    viewport.off("clicked", gatePlaceEvent);
     gatePlaceEvent = null;
   }
 }
@@ -61,8 +61,11 @@ function moveRelativeToMouseOnViewport(event, sprite) {
 function onGateMove(event, sprite) {
   moveRelativeToMouseOnViewport(event, sprite);
   if (gatePlaceEvent == null) {
-    gatePlaceEvent = (event) => onGatePlace(event, sprite);
-    viewport.on("pointerdown", gatePlaceEvent);
+    gatePlaceEvent = (event) => {
+      event = event.event;
+      onGatePlace(event, sprite);
+    };
+    viewport.on("clicked", gatePlaceEvent);
   }
 }
 
@@ -76,7 +79,7 @@ function onGatePlace(event, sprite) {
   sprite = null;
 
   viewport.off("pointermove", gateMoveEvent);
-  viewport.off("pointerdown", gatePlaceEvent);
+  viewport.off("clicked", gatePlaceEvent);
 
   gateMoveEvent = null;
   gatePlaceEvent = null;

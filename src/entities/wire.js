@@ -39,12 +39,12 @@ export class Wire extends Container {
 
     if (this.onClick === null) {
       this.onClick = (event) => this.onClickEvent(event);
-      viewport.on("pointerdown", this.onClick);
+      viewport.on("clicked", this.onClick);
     }
   }
 
   onClickEvent(event) {
-    let connectionPoint = event.target;
+    let connectionPoint = event.event.target;
 
     while (connectionPoint && !connectionPoint.isConnectionPoint) {
       connectionPoint = connectionPoint.parent;
@@ -69,7 +69,7 @@ export class Wire extends Container {
 
   cleanUp() {
     viewport.off("pointermove", this.onMove);
-    viewport.off("pointerdown", this.onClick);
+    viewport.off("clicked", this.onClick);
     this.onClick = null;
   }
 

@@ -32,10 +32,6 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
-viewport.on("pointerdown", (event) => {
-  const worldPos = viewport.toWorld(event.data.global.x, event.data.global.y);
-});
-
 resetViewport();
 viewport.drag().pinch().wheel().decelerate();
 
