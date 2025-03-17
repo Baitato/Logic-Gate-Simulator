@@ -7,9 +7,11 @@ export class ConnectionPoint extends Container {
     super();
     this.type = type;
     this.pointGraphics = null;
-    this.isConnected = false;
-    this.isHovered = false;
     this.isConnectionPoint = true;
+    this.isHovered = false;
+    this.pointerDownCallback = (event) => {
+      this.onPointerDown(event);
+    };
     this.createPoint();
   }
 
@@ -24,11 +26,10 @@ export class ConnectionPoint extends Container {
 
     this.pointGraphics.eventMode = "static";
     this.pointGraphics.cursor = "pointer";
-    this.pointGraphics.isConnectionPointGraphic = true;
 
     this.pointGraphics.on("pointerover", this.onHoverStart.bind(this));
     this.pointGraphics.on("pointerout", this.onHoverEnd.bind(this));
-    this.pointGraphics.on("pointerdown", this.onPointerDown.bind(this));
+    this.pointGraphics.on("pointerdown", this.pointerDownCallback);
 
     this.addChild(this.pointGraphics);
   }
@@ -44,8 +45,8 @@ export class ConnectionPoint extends Container {
   }
 
   onPointerDown(event) {
-    new Wire(this.getViewportPosition());
-    console.log("Connection point clicked:", this.getViewportPosition());
+    const wire = new Wire(this);
+    viewport.addChild(wire);
   }
 
   getViewportPosition() {
@@ -58,10 +59,5 @@ export class ConnectionPoint extends Container {
     this.pointGraphics.fill({ color: 0xffffff });
     this.pointGraphics.circle(0, 0, this.isHovered ? 4.5 : 3);
     this.pointGraphics.fill();
-  }
-
-  setConnected(isConnected) {
-    this.isConnected = isConnected;
-    this.updateVisuals();
   }
 }

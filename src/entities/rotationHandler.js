@@ -43,7 +43,6 @@ export class RotationHandler {
   onRotationHandleClick(event) {
     event.stopPropagation(); // Prevent gate click
 
-    // Store initial rotation and pointer angle
     this.startRotation = this.parentGate.rotation;
     const localPos = this.parentGate.toLocal(event.global);
     this.startPointerAngle = Math.atan2(localPos.y, localPos.x);
@@ -52,7 +51,6 @@ export class RotationHandler {
   }
 
   setupRotationEvents() {
-    // Define the handlers as class properties so they can be removed later
     this.handlePointerMove = (event) => {
       // Get pointer position in local coordinates
       const localPos = this.parentGate.toLocal(event.global);
@@ -67,6 +65,8 @@ export class RotationHandler {
         this.parentGate.rotation,
         targetRotation
       );
+
+      this.notifyConnectionPointsMoved();
     };
 
     this.handlePointerUp = () => {
@@ -75,6 +75,7 @@ export class RotationHandler {
         Math.round(this.parentGate.rotation / (Math.PI / 2)) * (Math.PI / 2);
       this.parentGate.rotation = snappedRotation;
 
+      this.notifyConnectionPointsMoved();
       // Clean up event listeners
       this.cleanupRotationEvents();
     };
@@ -89,7 +90,7 @@ export class RotationHandler {
       app.stage.off("pointermove", this.handlePointerMove);
       this.handlePointerMove = null;
     }
-    
+
     if (this.handlePointerUp) {
       app.stage.off("pointerup", this.handlePointerUp);
       this.handlePointerUp = null;
@@ -100,5 +101,13 @@ export class RotationHandler {
     return (
       currentRotation + (targetRotation - currentRotation) * smoothingFactor
     );
+  }
+
+  notifyConnectionPointsMoved() {
+    if (this.parentGate.connectionPoints) {
+      this.parentGate.connectionPoints.forEach((point) => {
+        point.emit("moved");
+      });
+    }
   }
 }

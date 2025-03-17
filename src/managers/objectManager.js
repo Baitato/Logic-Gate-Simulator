@@ -2,8 +2,13 @@ import { viewport } from "../core/viewport";
 import { LogicGate } from "../entities/logicGate";
 const gatePositions = new Map();
 
-function getKey(x, y) {
-  return `${x},${y}`;
+export function getKey(x, y) {
+  return `${x},${y}`; 
+}
+
+export function getObject(x, y) {
+  const key = getKey(x, y);
+  return gatePositions.get(key);
 }
 
 function addObject(x, y, obj) {
@@ -14,11 +19,13 @@ function addObject(x, y, obj) {
   gatePositions.set(key, obj);
 }
 
-function getObject(x, y) {
-  const key = getKey(x, y);
-  return gatePositions.get(key);
+export function save(x, y, gate) {
+  x = Math.round(x);
+  y = Math.round(y);
+  addObject(x, y, gate);
 }
 
-export function save(x, y, gate) {
-  addObject(x, y, gate);
+export function checkIfGateExists(x, y) {
+  const key = getKey(x, y);
+  return gatePositions.has(key);
 }

@@ -1,6 +1,4 @@
 import { ConnectionPoint } from "../entities/connectionPoint";
-import { Graphics } from "pixi.js";
-import { viewport } from "../core/viewport";
 
 export class ConnectionManager {
   constructor(parentGate) {

@@ -2,7 +2,7 @@ import { Container, Sprite } from "pixi.js";
 import { loadTexture } from "../managers/assetManager";
 import { ConnectionManager } from "../managers/connectionManager";
 import { RotationHandler } from "./rotationHandler";
-import { viewport } from "../core/viewport";
+import { getKey } from "../managers/objectManager";
 
 export class LogicGate extends Container {
   static selectedGate = null;
@@ -31,10 +31,6 @@ export class LogicGate extends Container {
     this.addChild(this.gateSprite);
 
     this.connectionManager.createConnectionPoints();
-  }
-
-  handleConnectionPointClick(connectionPoint, event) {
-    console.log(`Connection point clicked: ${connectionPoint.type}`);
   }
 
   onGateClick() {
@@ -68,6 +64,7 @@ export class LogicGate extends Container {
   initialize(x, y) {
     this.x = x;
     this.y = y;
+    this.key = getKey(x, y);
   }
 
   get connectionPoints() {
