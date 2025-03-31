@@ -3,12 +3,14 @@ import { loadTexture } from "../managers/assetManager";
 import { ConnectionManager } from "../managers/connectionManager";
 import { RotationHandler } from "./rotationHandler";
 import { getKey } from "../managers/objectManager";
+import { gateSpriteDimensions } from "../utils/constants";
 
 export class LogicGate extends Container {
   static selectedGate = null;
 
   constructor(type) {
     super();
+    this.delay = null;
     this.type = type;
     this.selected = false;
     this.gateSprite = null;
@@ -23,8 +25,8 @@ export class LogicGate extends Container {
     const texture = await loadTexture(this.type);
     this.gateSprite = new Sprite(texture);
     this.gateSprite.anchor.set(0.5);
-    this.gateSprite.width = 50;
-    this.gateSprite.height = 50;
+    this.gateSprite.width = gateSpriteDimensions.x;
+    this.gateSprite.height = gateSpriteDimensions.y;
     this.gateSprite.eventMode = "static";
     this.gateSprite.cursor = "pointer";
     this.gateSprite.on("pointerdown", this.onGateClick.bind(this));

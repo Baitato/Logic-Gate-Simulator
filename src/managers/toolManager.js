@@ -1,7 +1,9 @@
 import { viewport } from "../core/viewport";
 import { Sprite } from "pixi.js";
 import { loadTexture } from "./assetManager";
-import { save } from "./objectManager";
+import { getObject, save } from "./objectManager";
+import { gateSpriteDimensions } from "../utils/constants";
+import { getCellCenter } from "../utils/constants";
 
 let gateMoveEvent, gatePlaceEvent, currentSprite;
 
@@ -36,8 +38,8 @@ async function onGateClick(event, gate) {
   sprite.alpha = 0.6;
   sprite.eventMode = "dynamic";
   sprite.cursor = "pointer";
-  sprite.width = 50;
-  sprite.height = 50;
+  sprite.width = gateSpriteDimensions.x;
+  sprite.height = gateSpriteDimensions.y;
   sprite.gate = gate;
 
   currentSprite = sprite;
@@ -54,8 +56,16 @@ function moveRelativeToMouseOnViewport(event, sprite) {
   const gridSize = 50;
   const worldPos = viewport.toWorld(event.global);
 
-  sprite.x = Math.floor(worldPos.x / gridSize) * gridSize + gridSize / 2;
-  sprite.y = Math.floor(worldPos.y / gridSize) * gridSize + gridSize / 2;
+  const cellCenter = getCellCenter(worldPos.x, worldPos.y);
+
+  sprite.x = cellCenter.x;
+  sprite.y = cellCenter.y;
+
+  if (getObject(sprite.x, sprite.y) == null) {
+    sprite.alpha = 0.6;
+  } else {
+    sprite.alpha = 0;
+  }
 }
 
 function onGateMove(event, sprite) {
@@ -70,6 +80,10 @@ function onGateMove(event, sprite) {
 }
 
 function onGatePlace(event, sprite) {
+  if (getObject(sprite.x, sprite.y) != null) {
+    return;
+  }
+
   moveRelativeToMouseOnViewport(event, sprite);
 
   save(sprite.x, sprite.y, sprite.gate);

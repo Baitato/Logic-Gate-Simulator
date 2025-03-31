@@ -3,7 +3,7 @@ import { LogicGate } from "../entities/logicGate";
 const gatePositions = new Map();
 
 export function getKey(x, y) {
-  return `${x},${y}`; 
+  return `${x},${y}`;
 }
 
 export function getObject(x, y) {

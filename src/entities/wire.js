@@ -5,15 +5,18 @@ export class Wire extends Container {
   constructor(sourcePoint) {
     super();
     this.sourcePoint = sourcePoint;
-    this.targetPoint = null;
-
-    this.line = new Graphics();
     this.zIndex = -Infinity;
-    this.addChild(this.line);
+    this.targetPoint = null;
+    this.fanout = [];
+    this.value = 0;
+    this.delay = 2;
 
     const sourcePos = sourcePoint.getViewportPosition();
     this.x = sourcePos.x;
     this.y = sourcePos.y;
+
+    this.line = new Graphics();
+    this.addChild(this.line);
 
     this.onMove = (event) => this.onPointerMove(event);
     this.onClick = null;
@@ -58,6 +61,13 @@ export class Wire extends Container {
     }
 
     this.targetPoint = connectionPoint;
+
+    if (this.targetPoint.type === "output") {
+      this.fanout.push(connectionPoint.parentGate);
+    } else if (this.sourcePoint.type === "output") {
+      this.fanout.push(this.sourcePoint.parentGate);
+    }
+
     this.updatePosition();
 
     this.sourcePoint.on("moved", this.updatePosition.bind(this));
@@ -71,6 +81,10 @@ export class Wire extends Container {
     viewport.off("pointermove", this.onMove);
     viewport.off("clicked", this.onClick);
     this.onClick = null;
+  }
+
+  setValue(value) {
+    this.value = value;
   }
 
   updatePosition() {
