@@ -23,7 +23,7 @@ const toolboxBackground = new Graphics()
 
 toolboxContainer.addChild(toolboxBackground);
 
-const sideMenuElementNames = ["select", "eraser", "wire"];
+const sideMenuElementNames = ["select", "eraser", "switch-empty"];
 
 sideMenuElementNames.push(...gates);
 
@@ -44,7 +44,7 @@ async function createToolbox() {
   toolsScrollBox.y = scrollBarPadding.y;
 
   items.forEach((sprite) => {
-    sprite.on("pointerdown", (event) => onToolClick(event, sprite.gate));
+    sprite.on("pointerdown", (event) => onToolClick(event, sprite));
     toolsScrollBox.addItem(sprite);
   });
 

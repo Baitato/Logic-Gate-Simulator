@@ -16,6 +16,6 @@ export async function loadSprite(assetName, size) {
   sprite.height = size;
   sprite.eventMode = "static";
   sprite.cursor = "pointer";
-  sprite.gate = assetName;
+  sprite.spriteName = assetName;
   return sprite;
 }

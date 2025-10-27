@@ -10,7 +10,6 @@ export class LogicGate extends Container {
 
   constructor(type) {
     super();
-    this.delay = null;
     this.type = type;
     this.selected = false;
     this.gateSprite = null;

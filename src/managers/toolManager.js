@@ -4,12 +4,16 @@ import { loadTexture } from "./assetManager";
 import { getObject, save } from "./objectManager";
 import { gateSpriteDimensions } from "../utils/constants";
 import { getCellCenter } from "../utils/constants";
+import { gates } from "../utils/constants";
 
 let gateMoveEvent, gatePlaceEvent, currentSprite;
 
 export function onToolClick(event, tool) {
   cleanupPreviousTool();
-  onGateClick(event, tool);
+
+  console.log(tool.spriteName);
+
+  if (gates.includes(tool.spriteName)) onGateClick(event, tool.spriteName);
 }
 
 function cleanupPreviousTool() {
