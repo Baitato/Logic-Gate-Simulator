@@ -8,10 +8,12 @@ import { OrGate } from "../models/logic-gate/OrGate";
 import { XnorGate } from "../models/logic-gate/XnorGate";
 import { XorGate } from "../models/logic-gate/XorGate";
 import { Coordinate } from "../types/ICoordinate";
+import { Dimension } from "../types/IDimension";
 
 export const worldWidth: number = 10000;
 export const worldHeight: number = 10000;
 export const cellSize: number = 50;
+export const gateDimensions: Dimension = { x: 50, y: 50 };
 
 export const gateMap: Record<GateType, new (x: number, y: number) => Gate> = {
     [GateType.AND]: AndGate,
