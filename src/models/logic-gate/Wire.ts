@@ -13,15 +13,18 @@ export class Wire extends Graphics {
         super();
         this.zIndex = -Infinity;
         this.input = sourcePoint;
-
         const sourcePos: Point = sourcePoint.getViewportPosition();
         this.position.set(sourcePos.x, sourcePos.y);
 
-        viewport.on("pointermove", (event) => this.followPointer(event));
+        viewport.on("pointermove", (event) => {
+            this.followPointer(event);
+            viewport.once("pointerdown", this.handlePointerDown, this);
+        });
     }
 
     followPointer(event: FederatedPointerEvent): void {
         this.clear();
+        // boardState.activeWire = this;
 
         const globalPos: Point = viewport.toWorld(event.global);
         const localPos: Point = new Point(
@@ -32,9 +35,6 @@ export class Wire extends Graphics {
         this.moveTo(0, 0)
             .lineTo(localPos.x, localPos.y)
             .stroke({ color: 0xffffff, width: 2 });
-
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        viewport.once("pointerdown", this.handlePointerDown, this);
     }
 
     onClick(event: FederatedPointerEvent): void {
