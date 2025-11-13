@@ -8,13 +8,15 @@ const manifest = {
         {
             name: "base-textures",
             assets: {
-                andGate: "assets/and.png",
-                NandGate: "assets/nand.png",
-                orGate: "assets/or.png",
-                norGate: "assets/nor.png",
-                xorGate: "assets/xor.png",
-                xnorGate: "assets/xnor.png",
-                notGate: "assets/not.png",
+                switchEmpty: "assets/switch-empty.svg",
+                andGate: "assets/and.svg",
+                NandGate: "assets/nand.svg",
+                orGate: "assets/or.svg",
+                norGate: "assets/nor.svg",
+                xorGate: "assets/xor.svg",
+                xnorGate: "assets/xnor.svg",
+                notGate: "assets/not.svg",
+                bufferGate: "assets/buffer.svg",
                 rotate: "assets/rotate.svg"
             }
         }

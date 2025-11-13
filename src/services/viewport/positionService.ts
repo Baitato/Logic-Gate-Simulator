@@ -1,28 +1,36 @@
-import { Gate } from "../../models/logic-gate/Gate";
+import { Placeable } from "../../models/Placeable";
 
-const gatePositions = new Map();
+const positions = new Map();
 
 export function getKey(x: number, y: number): string {
   return `${x},${y}`;
 }
 
-export function getObject(x: number, y: number): Gate | undefined {
+export function getObject(x: number, y: number): Placeable | undefined {
   const key = getKey(x, y);
-  return gatePositions.get(key);
+  return positions.get(key);
 }
 
-function addObject(x: number, y: number, obj: Gate): void {
+function addObject(x: number, y: number, obj: Placeable): void {
   const key = getKey(x, y);
-  gatePositions.set(key, obj);
+  positions.set(key, obj);
 }
 
-export function save(x: number, y: number, gate: Gate): void {
+export function save(x: number, y: number, placeableObject: Placeable): void {
   x = Math.round(x);
   y = Math.round(y);
-  addObject(x, y, gate);
+  addObject(x, y, placeableObject);
+}
+
+export function destroy(x: number, y: number): void {
+  x = Math.round(x);
+  y = Math.round(y);
+  const key = getKey(x, y);
+  console.log(key);
+  positions.delete(key);
 }
 
 export function checkIfGateExists(x: number, y: number): boolean {
   const key = getKey(x, y);
-  return gatePositions.has(key);
+  return positions.has(key);
 }

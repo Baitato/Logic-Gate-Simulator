@@ -1,31 +1,35 @@
 import { Container, Graphics } from "pixi.js";
-import { GateTool } from "./GateTool";
+import { PlaceableTool } from "./PlaceableTool";
 import { ScrollBox } from "@pixi/ui";
 import { place } from "../services/viewport/placementService";
-import { GateType } from "../enums/GateType";
+import { PlaceableType } from "../enums/PlaceableType";
 
 const toolboxWidth = 145;
 const elementpadding = 20;
 const scrollBarPadding = { x: 25, y: 20 };
 
 export class Toolbox extends Container {
-    constructor() {
+    private constructor() {
         super();
         this.isRenderGroup = true;
         this.zIndex = 1000;
-        // Reorder: First get gates and compute height, then add background and ScrollBox
-        this.initializeToolbox();
     }
 
-    async initializeToolbox() {
-        const gates: GateTool[] = await this.getGateIcons();
+    static async create(): Promise<Toolbox> {
+        const toolbox = new Toolbox();
+        await toolbox.initializeToolbox();
+        return toolbox;
+    }
+
+    private async initializeToolbox(): Promise<void> {
+        const tools: PlaceableTool[] = await this.getPlaceableToolIcons();
         // Calculate dynamic toolbox height based on content
-        const toolboxHeight = this.calculateToolboxHeight(gates);
+        const toolboxHeight = this.calculateToolboxHeight(tools);
         this.addBackground(toolboxHeight);
-        this.addScrollBox(gates, toolboxHeight);
+        this.addScrollBox(tools, toolboxHeight);
     }
 
-    addBackground(toolboxHeight: number) {
+    private addBackground(toolboxHeight: number): void {
         const background: Graphics = new Graphics()
             .filletRect(
                 0.005 * window.innerWidth,
@@ -39,41 +43,46 @@ export class Toolbox extends Container {
         this.addChild(background);
     }
 
-    addScrollBox(gates: GateTool[], toolboxHeight: number) {
-        gates.forEach((gate) => { gate.on("pointerdown", (event) => place(event, gate.type)) });
+    private addScrollBox(tool: PlaceableTool[], toolboxHeight: number): void {
+        tool.forEach((tool) => { tool.on("pointerdown", (event) => place(event, tool.type)) });
 
         const scrollBox = new ScrollBox({
             width: toolboxWidth - scrollBarPadding.x,
             height: toolboxHeight - scrollBarPadding.y,
             radius: 20,
             elementsMargin: elementpadding,
-            items: gates,
+            items: tool,
         });
-
         scrollBox.position.set(scrollBarPadding.x, scrollBarPadding.y);
 
         this.addChild(scrollBox);
     }
 
-    calculateToolboxHeight(gates: GateTool[]): number {
-        if (gates.length === 0) return 0;
-        // Sum heights of all gates + margins between them + top/bottom padding
-        const totalGatesHeight = (Math.ceil(gates.length / 2)) * gates[0].height;
-        const totalMargins = (gates.length) * elementpadding;
-        return totalGatesHeight / 2 + totalMargins + scrollBarPadding.y * 2; // Add padding for top and bottom
+    private calculateToolboxHeight(tools: PlaceableTool[]): number {
+        if (tools.length === 0) return 0;
+
+        // Sum heights of all tools + margins between them + top/bottom padding
+        const totalToolsHeight = (Math.ceil(tools.length / 2)) * tools[0].height;
+        const totalMargins = Math.ceil((tools.length) / 2) * elementpadding * 2;
+
+        return totalToolsHeight / 2 + totalMargins + scrollBarPadding.y;
     }
 
-    async getGateIcons(): Promise<GateTool[]> {
-        const gateIcons: GateTool[] = [
-            new GateTool(GateType.AND),
-            new GateTool(GateType.NAND),
-            new GateTool(GateType.OR),
-            new GateTool(GateType.NOR),
-            new GateTool(GateType.XOR),
-            new GateTool(GateType.XNOR),
-            new GateTool(GateType.NOT),
+    private async getPlaceableToolIcons(): Promise<PlaceableTool[]> {
+        const placeableToolIcons: PlaceableTool[] = [
+            new PlaceableTool(PlaceableType.AND),
+            new PlaceableTool(PlaceableType.NAND),
+            new PlaceableTool(PlaceableType.OR),
+            new PlaceableTool(PlaceableType.NOR),
+            new PlaceableTool(PlaceableType.XOR),
+            new PlaceableTool(PlaceableType.XNOR),
+            new PlaceableTool(PlaceableType.NOT),
+            new PlaceableTool(PlaceableType.BUFFER),
+            new PlaceableTool(PlaceableType.SWITCH)
         ];
 
-        return gateIcons;
+        return placeableToolIcons;
     }
 }
+
+export const toolbox: Toolbox = await Toolbox.create();

@@ -1,61 +1,49 @@
-import { Container, Sprite } from "pixi.js";
+import { Sprite } from "pixi.js";
 import { loadSprite } from "../../utils/assetLoader";
-import { gateDimensions, gateMap } from "../../utils/constants";
-import { GateType } from "../../enums/GateType";
+import { placeableDimensions } from "../../utils/constants";
 import { Coordinate } from "../../types/ICoordinate";
-import { ConnectionPointType } from '../../enums/ConnectionPointType';
-import { ConnectionPoint } from "./ConnectionPoint";
+import { ConnectionPoint } from "../ConnectionPoint";
 import { RotationHandler } from "./RotationHandler";
+import { StateManager } from "../../state/StateManager";
+import { destroy } from "../../services/viewport/positionService";
+import { Placeable } from "../Placeable";
 
-export abstract class Gate extends Container {
-    static selectedGate: Gate | null = null;
-    sprite?: Sprite;
+export abstract class Gate extends Placeable {
+    offSprite?: Sprite;
     rotationHandler: RotationHandler = new RotationHandler(this);
+    outputPoints: ConnectionPoint[] = [];
+    inputPoints: ConnectionPoint[] = [];
 
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
 
     constructor(x: number, y: number) {
-        super();
+        super(x, y);
         this.x = x;
         this.y = y;
         this.eventMode = "static";
+        this.on("pointerdown", (event) => this.onSelect(event, this.rotationHandler));
     }
 
-    protected addConnectionPoints(): void {
-        this.addConnectionPointsToGate(ConnectionPointType.INPUT, this.getInputPoints());
-        this.addConnectionPointsToGate(ConnectionPointType.OUTPUT, this.getOutputPoints());
-    }
+    public override destroy() {
+        destroy(this.x, this.y);
 
-    private addConnectionPointsToGate(type: ConnectionPointType, points: Coordinate[]): void {
-        points.forEach((point) => {
-            this.addChild(new ConnectionPoint(type, point));
-        })
-    }
-
-    protected async setUpGate(assetName: string): Promise<void> {
-        const sprite = await loadSprite(assetName, gateDimensions);
-        this.sprite = sprite;
-        this.addChild(sprite);
-        this.addConnectionPoints();
-        this.on("pointerdown", () => this.onClick());
-    }
-
-    protected onClick(): void {
-        if (Gate.selectedGate) {
-            Gate.selectedGate.removeChild(Gate.selectedGate.rotationHandler);
+        if (StateManager.selectedPlaceable === this) {
+            StateManager.selectedPlaceable = null;
         }
 
-        if (Gate.selectedGate && Gate.selectedGate === this) {
-            Gate.selectedGate = null;
-            return;
-        }
+        super.destroy({ children: true });
+    }
 
-        Gate.selectedGate = this;
+    public select() {
+        StateManager.selectedPlaceable = this;
         this.addChild(this.rotationHandler);
     }
 
-    public static create(x: number, y: number, type: GateType): Gate {
-        return new gateMap[type](x, y);
+    protected override async setUp(assetName: string): Promise<void> {
+        const sprite = await loadSprite(assetName, placeableDimensions);
+        this.offSprite = sprite;
+        this.addChild(sprite);
+        this.addConnectionPoints();
     }
 }

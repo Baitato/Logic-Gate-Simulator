@@ -1,8 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-    <!-- Outer white button -->
-    <circle cx="25" cy="25" r="22" fill="white" stroke="black" stroke-width="2"/>
-    
-    <!-- Red center -->
-    <circle cx="25" cy="25" r="10" fill="red"/>
-</svg>
+<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="25" r="18" fill="#fff" stroke="#000" stroke-width="2"/><circle cx="20" cy="25" r="10" fill="red"/><path fill="#fff" stroke="#000" stroke-width="2" d="M40 22.5h10v5H40z"/></svg>

@@ -1,28 +1,28 @@
 import { FederatedPointerEvent, Sprite } from "pixi.js";
 import { loadTexture } from "../../utils/assetLoader";
-import { Gate } from "./Gate";
+import { placeableDimensions } from "../../utils/constants";
 import { viewport } from "../../core/viewport";
-import { gateDimensions } from "../../utils/constants";
+import { Placeable } from "../Placeable";
 
 export class RotationHandler extends Sprite {
-    parentGate: Gate;
+    parentPlaceable: Placeable;
     startPointerAngle: number = 0;
     startRotation: number = 0;
     private readonly pointerMoveListener = (event: FederatedPointerEvent) => this.onPointerMove(event);
     private readonly pointerUpListener = () => this.onPointerUp();
 
-    constructor(parentGate: Gate) {
+    constructor(parentPlaceable: Placeable) {
         super();
-        this.parentGate = parentGate;
+        this.parentPlaceable = parentPlaceable;
         this.setupRotationHandler();
     }
 
     async setupRotationHandler(): Promise<void> {
         this.texture = await loadTexture("rotate");
 
-        this.y = -(gateDimensions.y) / 2 - 10;
-        this.width = 10;
-        this.height = 10;
+        this.y = -(placeableDimensions.y) / 2 - 10;
+        this.width = 11;
+        this.height = 11;
         this.eventMode = "static";
         this.cursor = "pointer";
         this.zIndex = -10;
@@ -37,30 +37,33 @@ export class RotationHandler extends Sprite {
     onPointerDown(event: FederatedPointerEvent): void {
         event.stopPropagation();
 
-        this.startRotation = this.parentGate.rotation;
-        const localPos = this.parentGate.toLocal(event.global);
+        this.startRotation = this.parentPlaceable.rotation;
+        const localPos = this.parentPlaceable.toLocal(event.global);
         this.startPointerAngle = Math.atan2(localPos.y, localPos.x);
 
         this.setupRotationEvents();
     }
 
     onPointerMove(event: FederatedPointerEvent) {
-        const localPos = this.parentGate.toLocal(event.global);
+        const localPos = this.parentPlaceable.toLocal(event.global);
         const currentAngle = Math.atan2(localPos.y, localPos.x);
         const deltaAngle = currentAngle - this.startPointerAngle;
 
         // Apply smoothed rotation relative to the starting rotation
         const targetRotation = this.startRotation + deltaAngle;
-        this.parentGate.rotation = this.smoothRotation(
-            this.parentGate.rotation,
+        this.parentPlaceable.rotation = this.smoothRotation(
+            this.parentPlaceable.rotation,
             targetRotation
         );
+
+        this.parentPlaceable.renderWires();
     }
 
     onPointerUp(): void {
         // Snap the rotation to the nearest 90-degree increment
-        const snappedRotation = Math.round(this.parentGate.rotation / (Math.PI / 2)) * (Math.PI / 2);
-        this.parentGate.rotation = snappedRotation;
+        const snappedRotation = Math.round(this.parentPlaceable.rotation / (Math.PI / 2)) * (Math.PI / 2);
+        this.parentPlaceable.rotation = snappedRotation;
+        this.parentPlaceable.renderWires();
 
         this.cleanupRotationEvents();
     }

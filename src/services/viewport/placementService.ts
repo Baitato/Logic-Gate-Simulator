@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Point } from 'pixi.js';
-import { viewport } from '../../core/viewport';
-import { GateType } from '../../enums/GateType';
 import { getCellCenter } from '../../utils/constants';
 import { getObject, save } from './positionService';
-import { Gate } from '../../models/logic-gate/Gate';
+import { viewport } from '../../core/viewport';
+import { Placeable } from '../../models/Placeable';
+import { PlaceableObjectFactory } from '../../factory/PlaceableObjectFactory';
+import { PlaceableType } from '../../enums/PlaceableType';
 
-let moveEvent: ((event: any) => void) | undefined = undefined, placeEvent: ((event: any) => void) | undefined = undefined, curLogicGate: Gate | undefined = undefined;
+let moveEvent: ((event: any) => void) | undefined = undefined, placeEvent: ((event: any) => void) | undefined = undefined, curObject: Placeable | undefined = undefined;
 
-export function place(event: any, gate: GateType): void {
+export function place(event: any, gate: PlaceableType): void {
     cleanUp();
 
     const worldPos: Point = viewport.toWorld(event.global);
@@ -16,69 +17,69 @@ export function place(event: any, gate: GateType): void {
     initiatePlacement(worldPos.x, worldPos.y, gate);
 }
 
-function initiatePlacement(x: number, y: number, gate: GateType): void {
-    const logicGate: Gate = Gate.create(x, y, gate);
-    logicGate.alpha = 0.6;
+function initiatePlacement(x: number, y: number, type: string): void {
+    const placeable: Placeable = PlaceableObjectFactory.create(x, y, type);
+    placeable.alpha = 0.6;
 
-    curLogicGate = logicGate;
-    viewport.addChild(logicGate);
+    curObject = placeable;
+    viewport.addChild(placeable);
 
     if (moveEvent == undefined) {
-        moveEvent = (event) => onMove(event, logicGate);
+        moveEvent = (event) => onMove(event, placeable);
         viewport.on("pointermove", moveEvent);
     }
 }
 
-function onMove(event: any, logicGate: Gate): void {
-    moveRelativeToMouseOnViewport(event, logicGate);
+function onMove(event: any, placeable: Placeable): void {
+    moveRelativeToMouseOnViewport(event, placeable);
     if (placeEvent == undefined) {
         placeEvent = (event) => {
-            onPlace(event, logicGate);
+            onPlace(event, placeable);
         };
 
         viewport.on("pointerup", placeEvent);
     }
 }
 
-function onPlace(event: any, logicGate: Gate): void {
-    if (getObject(logicGate.x, logicGate.y) != undefined) {
+function onPlace(event: any, placeable: Placeable): void {
+    if (getObject(placeable.x, placeable.y) != undefined) {
         return;
     }
 
-    moveRelativeToMouseOnViewport(event, logicGate);
+    moveRelativeToMouseOnViewport(event, placeable);
 
-    save(logicGate.x, logicGate.y, logicGate);
+    save(placeable.x, placeable.y, placeable);
 
-    logicGate.alpha = 1;
+    placeable.alpha = 1;
 
     viewport.off("pointermove", moveEvent);
     viewport.off("pointerup", placeEvent);
 
     moveEvent = undefined;
     placeEvent = undefined;
-    curLogicGate = undefined;
+    curObject = undefined;
 }
 
 
-function moveRelativeToMouseOnViewport(event: any, logicGate: Gate): void {
+function moveRelativeToMouseOnViewport(event: any, placeable: Placeable): void {
     const worldPos = viewport.toWorld(event.global);
 
     const cellCenter = getCellCenter(worldPos.x, worldPos.y);
 
-    logicGate.x = cellCenter.x;
-    logicGate.y = cellCenter.y;
+    placeable.x = cellCenter.x;
+    placeable.y = cellCenter.y;
 
-    if (getObject(logicGate.x, logicGate.y) == undefined) {
-        logicGate.alpha = 0.6;
+    if (getObject(placeable.x, placeable.y) == undefined) {
+        placeable.alpha = 0.6;
     } else {
-        logicGate.alpha = 0;
+        placeable.alpha = 0;
     }
 }
 
 function cleanUp(): void {
-    if (curLogicGate) {
-        viewport.removeChild(curLogicGate);
-        curLogicGate = undefined;
+    if (curObject) {
+        viewport.removeChild(curObject);
+        curObject = undefined;
     }
 
     if (moveEvent) {

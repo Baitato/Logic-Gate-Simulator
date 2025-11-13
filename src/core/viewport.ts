@@ -1,41 +1,49 @@
 import { Viewport } from "pixi-viewport";
+import { Application } from "pixi.js";
 import { app } from "./app";
-import { worldWidth, worldHeight } from "../utils/constants";
 
-const viewport: Viewport = new Viewport({
-    screenWidth: window.innerWidth,
-    screenHeight: window.innerHeight,
-    worldWidth: worldWidth,
-    worldHeight: worldHeight,
-    events: app.renderer.events,
-});
+const worldWidth: number = 10000;
+const worldHeight: number = 10000;
 
-function resetViewport(): void {
-    viewport.moveCenter(0, 0);
-    viewport.setZoom(1, true);
-}
+export class MyViewport extends Viewport {
+    public app: Application;
 
-function handleResize(): void {
-    app.renderer.resize(window.innerWidth, window.innerHeight);
-    viewport.screenWidth = window.innerWidth;
-    viewport.screenHeight = window.innerHeight;
-}
+    constructor(app: Application) {
+        super({
+            screenWidth: window.innerWidth,
+            screenHeight: window.innerHeight,
+            worldWidth: worldWidth,
+            worldHeight: worldHeight,
+            events: app.renderer.events,
+        });
 
-function onSpaceKeyDown(event: KeyboardEvent): void {
-    if (event.code === "Space") {
-        resetViewport();
+        this.app = app;
+
+        window.addEventListener("resize", () => this.handleResize());
+        document.addEventListener("keydown", (event) => this.onSpaceKeyDown(event));
+
+        this.handleResize();
+        this.resetViewport();
+        this.drag().pinch().wheel().decelerate();
     }
+
+    resetViewport(): void {
+        this.moveCenter(0, 0);
+        this.setZoom(1, true);
+    }
+
+    handleResize(): void {
+        this.app.renderer.resize(window.innerWidth, window.innerHeight);
+        this.screenWidth = window.innerWidth;
+        this.screenHeight = window.innerHeight;
+    }
+
+    onSpaceKeyDown(event: KeyboardEvent): void {
+        if (event.code === "Space") {
+            this.resetViewport();
+        }
+    }
+
 }
 
-function initialize(): void {
-    window.addEventListener("resize", handleResize);
-    document.addEventListener("keydown", onSpaceKeyDown);
-
-    handleResize();
-    resetViewport();
-    viewport.drag().pinch().wheel().decelerate();
-}
-
-initialize();
-
-export { viewport };
+export const viewport = new MyViewport(app);

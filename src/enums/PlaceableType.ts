@@ -1,5 +1,6 @@
 
-export enum GateType {
+export enum PlaceableType {
+    SWITCH = "switch-empty",
     AND = "and",
     OR = "or",
     NOT = "not",

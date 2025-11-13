@@ -1,23 +1,32 @@
 import { Application } from "pixi.js";
 
-export const app: Application = await (async () => {
-    const newApp = new Application();
+export class ApplicationWrapper extends Application {
+    private constructor() {
+        super();
+    }
 
-    await newApp.init({
-        background: 0x101012,
-        resizeTo: window,
-        sharedTicker: true,
-        autoStart: true,
-    });
+    static async create(): Promise<ApplicationWrapper> {
+        const app = new ApplicationWrapper();
 
-    newApp.renderer.resolution = window.devicePixelRatio;
-    newApp.stage.eventMode = "static";
+        await app.init({
+            background: 0x101012,
+            resizeTo: window,
+            sharedTicker: true,
+            autoStart: true,
+            preference: 'webgpu'
+        });
 
-    newApp.canvas.style.width = '100%';
-    newApp.canvas.style.height = '100%';
-    newApp.canvas.style.position = 'absolute';
-    newApp.canvas.style.top = '0';
-    newApp.canvas.style.left = '0';
+        app.renderer.resolution = window.devicePixelRatio;
+        app.stage.eventMode = "static";
 
-    return newApp;
-})();
+        app.canvas.style.width = '100%';
+        app.canvas.style.height = '100%';
+        app.canvas.style.position = 'absolute';
+        app.canvas.style.top = '0';
+        app.canvas.style.left = '0';
+
+        return app;
+    }
+}
+
+export const app = await ApplicationWrapper.create();
