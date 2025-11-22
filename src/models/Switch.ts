@@ -6,10 +6,14 @@ import { Dimension } from "../types/IDimension";
 import { loadSprite } from "../utils/assetLoader";
 import { StateManager, stateManager } from "../state/StateManager";
 import { RotationHandler } from './logic-gate/RotationHandler';
+import { PlaceableType } from "../enums/PlaceableType";
+import { simulationService } from "../core/simulator/SimulationService";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
 export class Switch extends Placeable {
+    type: PlaceableType = PlaceableType.SWITCH;
+    placeableId: number;
     static assetName: string = "switch-empty"
     static onAssetName: string = "on-switch"
     rotationHandler: RotationHandler = new RotationHandler(this);
@@ -24,7 +28,16 @@ export class Switch extends Placeable {
 
         this.eventMode = "static";
         this.setUp(Switch.assetName);
+
+        this.placeableId = StateManager.gateIdCounter++;
+        StateManager.gateById.set(this.placeableId, this);
+
         this.on("pointerdown", (event) => this.onSelect(event, this.rotationHandler));
+    }
+
+    public override destroy(): void {
+        StateManager.gateById.delete(this.placeableId);
+        super.destroy({ children: true });
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -94,5 +107,7 @@ export class Switch extends Placeable {
             this.onSprite!.visible = false;
             this.offSprite!.visible = true;
         }
+
+        simulationService.flipSwitch(this.placeableId);
     }
 }

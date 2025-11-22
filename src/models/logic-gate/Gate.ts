@@ -7,31 +7,39 @@ import { RotationHandler } from "./RotationHandler";
 import { StateManager } from "../../state/StateManager";
 import { destroy } from "../../services/viewport/positionService";
 import { Placeable } from "../Placeable";
+import { PlaceableType } from '../../enums/PlaceableType';
 
 export abstract class Gate extends Placeable {
     offSprite?: Sprite;
     rotationHandler: RotationHandler = new RotationHandler(this);
     outputPoints: ConnectionPoint[] = [];
     inputPoints: ConnectionPoint[] = [];
+    type: PlaceableType;
+    placeableId: number;
 
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, type: PlaceableType) {
         super(x, y);
         this.x = x;
         this.y = y;
         this.eventMode = "static";
+
+        this.type = type;
+        this.placeableId = StateManager.gateIdCounter++;
+        StateManager.gateById.set(this.placeableId, this);
         this.on("pointerdown", (event) => this.onSelect(event, this.rotationHandler));
     }
 
     public override destroy() {
-        destroy(this.x, this.y);
-
+        StateManager.gateById.delete(this.placeableId);
+        
         if (StateManager.selectedPlaceable === this) {
             StateManager.selectedPlaceable = null;
         }
-
+        
+        destroy(this.x, this.y);
         super.destroy({ children: true });
     }
 

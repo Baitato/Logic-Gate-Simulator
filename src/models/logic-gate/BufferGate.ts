@@ -3,11 +3,11 @@ import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class BufferGate extends Gate {
-    static type: string = PlaceableType.BUFFER;
+    static type: PlaceableType = PlaceableType.BUFFER;
     static assetName: string = "buffer";
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, BufferGate.type);
 
         this.setUp(BufferGate.assetName);
     }

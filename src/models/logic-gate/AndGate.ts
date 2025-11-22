@@ -3,11 +3,11 @@ import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class AndGate extends Gate {
-    static type: string = PlaceableType.AND;
+    static type: PlaceableType = PlaceableType.AND;
     static assetName: string = "and";
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, AndGate.type);
 
         this.setUp(AndGate.assetName);
     }

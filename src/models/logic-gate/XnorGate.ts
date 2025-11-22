@@ -3,11 +3,11 @@ import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class XnorGate extends Gate {
-    static type: string = PlaceableType.XNOR;
+    static type: PlaceableType = PlaceableType.XNOR;
     static assetName: string = "xnor";
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, XnorGate.type);
 
         this.setUp(XnorGate.assetName);
     }

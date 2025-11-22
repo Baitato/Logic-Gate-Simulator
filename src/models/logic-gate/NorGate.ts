@@ -3,11 +3,11 @@ import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class NorGate extends Gate {
-    static type: string = PlaceableType.NOR;
+    static type: PlaceableType = PlaceableType.NOR;
     static assetName: string = "nor";
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, NorGate.type);
 
         this.setUp(NorGate.assetName);
     }

@@ -3,11 +3,11 @@ import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class NandGate extends Gate {
-    static type: string = PlaceableType.NAND;
+    static type: PlaceableType = PlaceableType.NAND;
     static assetName: string = "nand";
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, NandGate.type);
 
         this.setUp(NandGate.assetName);
     }

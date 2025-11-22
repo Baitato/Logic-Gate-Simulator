@@ -1,14 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Container, DestroyOptions, FederatedPointerEvent, Sprite } from "pixi.js";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { ConnectionPoint } from './ConnectionPoint';
 import { Coordinate } from "../types/ICoordinate";
 import { RotationHandler } from './logic-gate/RotationHandler';
 import { stateManager, StateManager } from "../state/StateManager";
+import { PlaceableType } from "../enums/PlaceableType";
 
 export abstract class Placeable extends Container {
     abstract offSprite?: Sprite;
-    static type: string;
+    abstract type: PlaceableType;
+    abstract placeableId: number;
     abstract outputPoints: ConnectionPoint[];
     abstract inputPoints: ConnectionPoint[];
     abstract rotationHandler: RotationHandler;
@@ -21,10 +22,6 @@ export abstract class Placeable extends Container {
         super();
         this.x = x;
         this.y = y;
-    }
-
-    public static create(x: number, y: number, type: string): Placeable {
-        throw new Error("Method not implemented.");
     }
 
     public destroy(options?: DestroyOptions): void {
@@ -49,19 +46,19 @@ export abstract class Placeable extends Container {
     }
 
     protected addConnectionPoints(): void {
-        this.addConnectionPointsToGate(ConnectionPointType.INPUT, this.getInputPoints());
-        this.addConnectionPointsToGate(ConnectionPointType.OUTPUT, this.getOutputPoints());
+        const count = [0];
+        this.addConnectionPointsToGate(ConnectionPointType.INPUT, this.getInputPoints(), count);
+        this.addConnectionPointsToGate(ConnectionPointType.OUTPUT, this.getOutputPoints(), count);
     }
 
-    protected addConnectionPointsToGate(type: ConnectionPointType, points: Coordinate[]): void {
+    protected addConnectionPointsToGate(type: ConnectionPointType, points: Coordinate[], count: number[]): void {
         points.forEach((point) => {
-            const connectionPoint = new ConnectionPoint(type, point);
+            const connectionPoint = new ConnectionPoint(type, point, this, count[0]++);
 
-            if (type == ConnectionPointType.INPUT) {
+            if (type == ConnectionPointType.INPUT)
                 this.inputPoints.push(connectionPoint);
-            } else {
+            else
                 this.outputPoints.push(connectionPoint);
-            }
 
             this.addChild(connectionPoint);
         })

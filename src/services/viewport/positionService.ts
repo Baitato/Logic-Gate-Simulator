@@ -17,16 +17,11 @@ function addObject(x: number, y: number, obj: Placeable): void {
 }
 
 export function save(x: number, y: number, placeableObject: Placeable): void {
-  x = Math.round(x);
-  y = Math.round(y);
   addObject(x, y, placeableObject);
 }
 
 export function destroy(x: number, y: number): void {
-  x = Math.round(x);
-  y = Math.round(y);
   const key = getKey(x, y);
-  console.log(key);
   positions.delete(key);
 }
 

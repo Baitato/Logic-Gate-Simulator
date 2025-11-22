@@ -2,11 +2,16 @@ import { viewport } from "../core/viewport";
 import { ConnectionPoint } from "../models/ConnectionPoint";
 import { Placeable } from "../models/Placeable";
 import { Wire } from "../models/Wire";
+import { WireUnplaced } from "../models/WireUnplaced";
 
 export class StateManager {
-    static activeWire: Wire | null = null;
+    static activeWire: WireUnplaced | null = null;
     static activeConnectionPoint: ConnectionPoint | null = null;
     static selectedPlaceable: Placeable | null = null;
+    static gateIdCounter: number = 0;
+    static wireIdCounter: number = 0;
+    static gateById: Map<number, Placeable> = new Map<number, Placeable>();
+    static wireById: Map<number, Wire> = new Map<number, Wire>();
 
     constructor() {
         window.addEventListener("keydown", (event: KeyboardEvent) => this.onKeyPress(event))

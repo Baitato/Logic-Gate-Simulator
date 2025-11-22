@@ -1,93 +1,91 @@
-import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
-import { viewport } from "../core/viewport";
+import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { StateManager } from "../state/StateManager";
+import { Placeable } from "./Placeable";
+import { simulationService } from "../core/simulator/SimulationService";
+import { Value } from "../core/simulator/FunctionalGate";
 
 export class Wire extends Graphics {
-    endPoint: ConnectionPoint | null = null;
-    startPoint: ConnectionPoint;
-    private value: number | null = null;
+    targetPoint: ConnectionPoint;
+    sourcePoint: ConnectionPoint;
+    source: Placeable;
+    target: Placeable;
 
-    private readonly handlePointerDown = () => this.onClick();
-    private readonly handlePointerMove = (event: FederatedPointerEvent) => this.followPointer(event);
+    wireId: number;
 
-    constructor(sourcePoint: ConnectionPoint) {
+    private value: Value;
+
+    constructor(sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint) {
         super();
         this.zIndex = -Infinity;
-        this.startPoint = sourcePoint;
-        const sourcePos: Point = sourcePoint.getViewportPosition();
-        this.position.set(sourcePos.x, sourcePos.y);
-        StateManager.activeWire = this;
+        this.sourcePoint = sourcePoint;
+        this.targetPoint = targetPoint;
+        this.wireId = StateManager.wireIdCounter++;
 
-        viewport.on("pointermove", this.handlePointerMove, this);
-    }
+        if (sourcePoint.type === ConnectionPointType.INPUT) {
+            [this.sourcePoint, this.targetPoint] = [this.targetPoint, this.sourcePoint];
+        }
 
-    private followPointer(event: FederatedPointerEvent): void {
-        this.clear();
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        viewport.once("pointerdown", this.handlePointerDown, this);
+        this.drawLine(0xffffff);
 
-        const globalPos: Point = viewport.toWorld(event.global);
-        const localPos: Point = new Point(
-            globalPos.x - this.position.x,
-            globalPos.y - this.position.y
-        );
+        this.source = this.sourcePoint.parentPlaceable;
+        this.target = this.targetPoint.parentPlaceable;
 
-        this.moveTo(0, 0)
-            .lineTo(localPos.x, localPos.y)
-            .stroke({ color: 0xffffff, width: 2 });
-    }
+        StateManager.wireById.set(this.wireId, this);
 
-    public setValue(value: number) {
-        this.value = value;
-        this.emit('valueUpdated', value);
-    }
-
-    public getValue(): number | null {
-        return this.value;
-    }
-
-    public render(): void {
-        if (this.endPoint == null) return;
-
-        const sourcePos: Point = this.startPoint.getViewportPosition();
-        this.position.set(sourcePos.x, sourcePos.y);
-
-        const color = this.value != null ? 0x00ff00 : 0xffffff;
-
-        const endPos: Point = this.endPoint.getViewportPosition();
-        this.clear();
-        this.moveTo(0, 0)
-            .lineTo(endPos.x - this.position.x, endPos.y - this.position.y)
-            .stroke({ color: color, width: 2 });
-    }
-
-    private onClick(): void {
-        this.destroy();
-    }
-
-    public persist(endPoint: ConnectionPoint): void {
-        this.defaultStates();
-        this.clear();
-        this.endPoint = endPoint;
-        this.startPoint.addWire(this);
-        endPoint.addWire(this);
+        simulationService.addEdge(this);
         this.render();
     }
 
     public destroy(): void {
-        this.resetAndDestroy();
-    }
+        this.targetPoint.wires.delete(this);
+        this.sourcePoint.wires.delete(this);
 
-    private resetAndDestroy(): void {
-        this.defaultStates();
+        simulationService.deleteEdge(this);
+
+        StateManager.wireById.delete(this.wireId);
         super.destroy();
     }
 
-    private defaultStates() {
-        viewport.off("pointermove", this.handlePointerMove, this);
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        StateManager.activeWire = null;
-        StateManager.activeConnectionPoint = null;
+    public setValue(value: Value): void {
+        this.value = value;
+        this.render();
+    }
+
+    public getValue(): Value {
+        return this.value;
+    }
+
+    public render(): void {
+        const RED = 0xff0000;
+        const GREEN = 0x00ff00;
+        const WHITE = 0xffffff;
+
+        let color;
+
+        switch (this.value) {
+            case 0:
+                color = WHITE;
+                break;
+            case 1:
+                color = GREEN;
+                break;
+            default:
+                color = RED;
+        }
+
+        this.clear();
+        this.drawLine(color);
+    }
+
+    private drawLine(color: number): void {
+        const sourcePos = this.sourcePoint.getViewportPosition();
+        const targetPos = this.targetPoint.getViewportPosition();
+
+        this.position.set(0, 0);
+        this.moveTo(sourcePos.x, sourcePos.y)
+            .lineTo(targetPos.x, targetPos.y)
+            .stroke({ color: color, width: 2 });
     }
 }
