@@ -13,7 +13,6 @@ function dfs(node: number, visited: Set<number>, adjacencyList: Map<number, Set<
 }
 
 export function getCondensedGraph(adjacencyList: Map<number, Set<number>>): SCC[] {
-    // const condensedAdjacency: Map<SCC, SCC[]> = new Map();
     const visited = new Set<number>();
     const order: number[] = [];
 
@@ -35,7 +34,6 @@ export function getCondensedGraph(adjacencyList: Map<number, Set<number>>): SCC[
     visited.clear();
     order.reverse();
 
-    // const root: Map<number, number> = new Map();
     const scc: SCC[] = [];
 
     for (const node of order) {

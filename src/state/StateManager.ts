@@ -2,12 +2,12 @@ import { viewport } from "../core/viewport";
 import { ConnectionPoint } from "../models/ConnectionPoint";
 import { Placeable } from "../models/Placeable";
 import { Wire } from "../models/Wire";
-import { WireUnplaced } from "../models/WireUnplaced";
+import { placeableState } from "./PlaceableState";
+import { unplacedWireState } from "./UnplacedWireState";
+import { wireState } from "./WireState";
 
 export class StateManager {
-    static activeWire: WireUnplaced | null = null;
     static activeConnectionPoint: ConnectionPoint | null = null;
-    static selectedPlaceable: Placeable | null = null;
     static gateIdCounter: number = 0;
     static wireIdCounter: number = 0;
     static gateById: Map<number, Placeable> = new Map<number, Placeable>();
@@ -19,16 +19,15 @@ export class StateManager {
     }
 
     private onViewportPress() {
-        if (StateManager.selectedPlaceable) {
-            this.unselectPlaceable();
+        if (placeableState.selected || wireState.selected) {
+            this.unselect();
         }
     }
 
-    public unselectPlaceable() {
-        if (StateManager.selectedPlaceable) {
-            StateManager.selectedPlaceable.removeChild(StateManager.selectedPlaceable.rotationHandler);
-            StateManager.selectedPlaceable = null;
-        }
+    public unselect() {
+        placeableState.unselect();
+        wireState.unselect();
+        unplacedWireState.unselect();
     }
 
     onKeyPress(event: KeyboardEvent): void {
@@ -38,15 +37,9 @@ export class StateManager {
     }
 
     deleteCurrentSelection(): void {
-        if (StateManager.activeWire) {
-            StateManager.activeWire.destroy();
-            StateManager.activeWire = null;
-        }
-
-        if (StateManager.selectedPlaceable) {
-            StateManager.selectedPlaceable.destroy();
-            StateManager.selectedPlaceable = null;
-        }
+        placeableState.delete();
+        wireState.delete();
+        unplacedWireState.delete();
     }
 }
 

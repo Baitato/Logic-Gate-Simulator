@@ -30,7 +30,7 @@ export async function preloadAssets(): Promise<void> {
 
 export async function loadTexture(assetName: string, assetPath: string = assetsPath): Promise<Texture> {
     const texturePath = assetPath + assetName + ".svg";
-    const texture = await Assets.load(texturePath);
+    const texture = await Assets.load({ src: texturePath, data: { resolution: 4 } });
 
     return texture;
 }

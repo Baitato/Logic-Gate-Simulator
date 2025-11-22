@@ -1,13 +1,14 @@
-import { FederatedPointerEvent, Graphics, Sprite } from "pixi.js";
+import { Graphics, Sprite } from "pixi.js";
 import { Coordinate } from "../types/ICoordinate";
 import { ConnectionPoint } from "./ConnectionPoint";
 import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
 import { loadSprite } from "../utils/assetLoader";
-import { StateManager, stateManager } from "../state/StateManager";
+import { StateManager } from "../state/StateManager";
 import { RotationHandler } from './logic-gate/RotationHandler';
 import { PlaceableType } from "../enums/PlaceableType";
 import { simulationService } from "../core/simulator/SimulationService";
+import { placeableState } from "../state/PlaceableState";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
@@ -26,18 +27,12 @@ export class Switch extends Placeable {
     constructor(x: number, y: number) {
         super(x, y);
 
-        this.eventMode = "static";
         this.setUp(Switch.assetName);
 
         this.placeableId = StateManager.gateIdCounter++;
         StateManager.gateById.set(this.placeableId, this);
 
-        this.on("pointerdown", (event) => this.onSelect(event, this.rotationHandler));
-    }
-
-    public override destroy(): void {
-        StateManager.gateById.delete(this.placeableId);
-        super.destroy({ children: true });
+        this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -46,13 +41,6 @@ export class Switch extends Placeable {
 
     protected override getOutputPoints(): Coordinate[] {
         return [{ x: 25, y: 0 }];
-    }
-
-    protected evaluate(): void {
-        const outputValue = this.isOn ? 1 : 0;
-        this.outputPoints.forEach((outputPoint) => {
-            outputPoint.propagateValue(outputValue);
-        });
     }
 
     protected override async setUp(assetName: string): Promise<void> {
@@ -76,25 +64,6 @@ export class Switch extends Placeable {
         circle.on("pointerdown", () => this.toggleSwitch());
 
         this.addChild(circle);
-    }
-
-    protected onClick(event: FederatedPointerEvent): void {
-        event.stopPropagation();  // Prevent bubbling to viewport
-        stateManager.unselectPlaceable();
-
-        this.select();
-    }
-
-    public select() {
-        StateManager.selectedPlaceable = this;
-        this.addChild(this.rotationHandler);
-    }
-
-    protected onToggle(event: FederatedPointerEvent): void {
-        event.stopPropagation();  // Prevent bubbling to viewport
-        stateManager.unselectPlaceable();
-
-        this.select();
     }
 
     private toggleSwitch(): void {

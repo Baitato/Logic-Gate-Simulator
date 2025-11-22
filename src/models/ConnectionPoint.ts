@@ -6,6 +6,7 @@ import { Wire } from "./Wire";
 import { StateManager } from "../state/StateManager";
 import { Placeable } from './Placeable';
 import { WireUnplaced } from './WireUnplaced';
+import { unplacedWireState } from '../state/UnplacedWireState';
 
 export class ConnectionPoint extends Graphics {
     type: ConnectionPointType;
@@ -73,7 +74,7 @@ export class ConnectionPoint extends Graphics {
             return;
         }
 
-        if (StateManager.activeConnectionPoint === null || StateManager.activeWire === null) {
+        if (StateManager.activeConnectionPoint === null || unplacedWireState.selected === null) {
             const wire = new WireUnplaced(this);
             viewport.addChild(wire);
             StateManager.activeConnectionPoint = this;
@@ -90,9 +91,9 @@ export class ConnectionPoint extends Graphics {
 
     private resetStates() {
         StateManager.activeConnectionPoint = null;
-        if (StateManager.activeWire)
-            viewport.removeChild(StateManager.activeWire);
-        StateManager.activeWire?.destroy();
-        StateManager.activeWire = null;
+        if (unplacedWireState.selected)
+            viewport.removeChild(unplacedWireState.selected);
+        unplacedWireState.selected?.destroy();
+        unplacedWireState.selected = null;
     }
 }

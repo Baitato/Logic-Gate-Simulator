@@ -29,7 +29,7 @@ export class MyViewport extends Viewport {
 
     resetViewport(): void {
         this.moveCenter(0, 0);
-        this.setZoom(1, true);
+        this.setZoom(1.25, true);
     }
 
     handleResize(): void {

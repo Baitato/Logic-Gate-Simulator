@@ -35,3 +35,5 @@ export const gateMap: Record<string, new (x: number, y: number) => Placeable> = 
     [PlaceableType.BUFFER]: BufferGate,
     [PlaceableType.SWITCH]: Switch,
 };
+
+export const CYAN = 0x40E0D0;

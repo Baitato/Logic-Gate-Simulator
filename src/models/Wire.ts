@@ -5,6 +5,8 @@ import { StateManager } from "../state/StateManager";
 import { Placeable } from "./Placeable";
 import { simulationService } from "../core/simulator/SimulationService";
 import { Value } from "../core/simulator/FunctionalGate";
+import { wireState } from "../state/WireState";
+import { CYAN } from "../utils/constants";
 
 export class Wire extends Graphics {
     targetPoint: ConnectionPoint;
@@ -21,6 +23,10 @@ export class Wire extends Graphics {
         this.zIndex = -Infinity;
         this.sourcePoint = sourcePoint;
         this.targetPoint = targetPoint;
+
+        this.cursor = "pointer";
+        this.eventMode = "static";
+
         this.wireId = StateManager.wireIdCounter++;
 
         if (sourcePoint.type === ConnectionPointType.INPUT) {
@@ -36,6 +42,8 @@ export class Wire extends Graphics {
 
         simulationService.addEdge(this);
         this.render();
+
+        this.on("pointerdown", (event) => wireState.onSelect(event, this));
     }
 
     public destroy(): void {
@@ -79,13 +87,21 @@ export class Wire extends Graphics {
         this.drawLine(color);
     }
 
-    private drawLine(color: number): void {
+    public drawLine(color: number): void {
         const sourcePos = this.sourcePoint.getViewportPosition();
         const targetPos = this.targetPoint.getViewportPosition();
 
         this.position.set(0, 0);
+
+        if (wireState.selected === this) {
+            this.moveTo(sourcePos.x, sourcePos.y)
+                .lineTo(targetPos.x, targetPos.y)
+                .stroke({ color: CYAN, width: 4 });
+        }
+
         this.moveTo(sourcePos.x, sourcePos.y)
             .lineTo(targetPos.x, targetPos.y)
             .stroke({ color: color, width: 2 });
     }
+
 }

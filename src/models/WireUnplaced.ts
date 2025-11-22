@@ -2,6 +2,7 @@ import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
 import { viewport } from "../core/viewport";
 import { StateManager } from "../state/StateManager";
+import { unplacedWireState } from "../state/UnplacedWireState";
 
 export class WireUnplaced extends Graphics {
     endPoint: ConnectionPoint | null = null;
@@ -16,7 +17,7 @@ export class WireUnplaced extends Graphics {
         this.startPoint = sourcePoint;
         const sourcePos: Point = sourcePoint.getViewportPosition();
         this.position.set(sourcePos.x, sourcePos.y);
-        StateManager.activeWire = this;
+        unplacedWireState.selected = this;
 
         viewport.on("pointermove", this.handlePointerMove, this);
     }
@@ -53,7 +54,7 @@ export class WireUnplaced extends Graphics {
     private defaultStates() {
         viewport.off("pointermove", this.handlePointerMove, this);
         viewport.off("pointerdown", this.handlePointerDown, this);
-        StateManager.activeWire = null;
+        unplacedWireState.selected = null;
         StateManager.activeConnectionPoint = null;
     }
 }

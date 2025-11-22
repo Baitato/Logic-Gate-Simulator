@@ -19,6 +19,7 @@ class SimulationService {
         // SimulationService.cnt++;
 
         const condensedSccGraph = getCondensedGraph(this.adjacencyList);
+        // console.log(condensedSccGraph);
 
         for (const scc of condensedSccGraph) {
             const nodes = scc.nodes;
@@ -29,6 +30,35 @@ class SimulationService {
                 const newValue = gate.evaluate();
 
                 this.setOutputValues(gate, newValue);
+            } else {
+                let bad = false;
+
+                for (let i = 0; i < 20; i++) {
+                    let changed = false;
+
+                    for (const nodeId of nodes) {
+                        const gate = this.gates.get(nodeId)!;
+                        const newValue = gate.evaluate();
+
+                        if (newValue !== gate.value) {
+                            changed = true;
+                        }
+                        this.setOutputValues(gate, newValue);
+                    }
+
+                    if (!changed)
+                        break;
+
+                    if (i == 19 && changed)
+                        bad = true;
+                }
+
+                if (bad) {
+                    for (const nodeId of nodes) {
+                        const gate = this.gates.get(nodeId)!;
+                        this.setOutputValues(gate, undefined);
+                    }
+                }
             }
         }
     }
@@ -44,10 +74,6 @@ class SimulationService {
 
     private setOutputValues(gate: FunctionalGate, newValue: Value): void {
         gate.outputs.forEach(outputWireId => {
-            if (gate.gateId === 1) {
-                // console.log(outputWireId, newValue, gate.inputs, this.netList);
-            }
-
             this.netList.set(outputWireId, newValue);
             const outputWire = this.wires.get(outputWireId)!;
             outputWire.setValue(newValue);
@@ -70,8 +96,6 @@ class SimulationService {
         this.adjacencyList.get(source.placeableId)!.add(target.placeableId);
 
         this.netList.set(wire.wireId, this.undefinedIfNotSwitch(source));
-
-        console.log(this.netList);
 
         // this.log();
     }
