@@ -176,10 +176,6 @@ class SimulationService {
 
         return undefined;
     }
-
-    private log() {
-        console.log(this.adjacencyList);
-    }
 }
 
 export const simulationService = new SimulationService();
