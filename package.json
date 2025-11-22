@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
@@ -19,6 +21,7 @@
   },
   "dependencies": {
     "@pixi/ui": "^2.2.2",
+    "gh-pages": "^6.3.0",
     "pixi-viewport": "^6.0.3",
     "pixi.js": "^8.9.1"
   }
