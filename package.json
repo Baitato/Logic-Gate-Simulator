@@ -1,5 +1,6 @@
 {
   "name": "logic-gate-simulator",
+  "homepage": "https://baitato.github.io/Logic-Gate-Simulator/",
   "private": true,
   "version": "0.0.0",
   "type": "module",

@@ -15,14 +15,12 @@ class PlaceableState {
     public select(placeable: Placeable, rotationHandler: RotationHandler) {
         this.selected = placeable;
         this.selected.addChild(rotationHandler);
-        this.selected.addSelectionBox();
     }
 
     public unselect() {
         if (this.selected == null)
             return;
 
-        this.selected.removeSelectionBox();
         this.selected.removeChild(this.selected.rotationHandler);
         this.selected = null;
     }

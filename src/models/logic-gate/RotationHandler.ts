@@ -1,7 +1,7 @@
 import { FederatedPointerEvent, Sprite } from "pixi.js";
 import { loadTexture } from "../../utils/assetLoader";
 import { placeableDimensions } from "../../utils/constants";
-import { viewport } from "../../core/viewport";
+import { viewport } from "../../core/instances";
 import { Placeable } from "../Placeable";
 
 export class RotationHandler extends Sprite {

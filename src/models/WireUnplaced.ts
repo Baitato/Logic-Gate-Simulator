@@ -1,6 +1,6 @@
 import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
-import { viewport } from "../core/viewport";
+import { viewport } from "../core/instances";
 import { StateManager } from "../state/StateManager";
 import { unplacedWireState } from "../state/UnplacedWireState";
 
@@ -15,6 +15,7 @@ export class WireUnplaced extends Graphics {
         super();
         this.zIndex = -Infinity;
         this.startPoint = sourcePoint;
+        this.eventMode = "none";
         const sourcePos: Point = sourcePoint.getViewportPosition();
         this.position.set(sourcePos.x, sourcePos.y);
         unplacedWireState.selected = this;

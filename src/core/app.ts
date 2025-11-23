@@ -28,5 +28,3 @@ export class ApplicationWrapper extends Application {
         return app;
     }
 }
-
-export const app = await ApplicationWrapper.create();

@@ -84,5 +84,3 @@ export class Toolbox extends Container {
         return placeableToolIcons;
     }
 }
-
-export const toolbox: Toolbox = await Toolbox.create();

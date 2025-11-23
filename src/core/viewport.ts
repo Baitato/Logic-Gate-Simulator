@@ -1,6 +1,5 @@
 import { Viewport } from "pixi-viewport";
 import { Application } from "pixi.js";
-import { app } from "./app";
 
 const worldWidth: number = 10000;
 const worldHeight: number = 10000;
@@ -45,5 +44,3 @@ export class MyViewport extends Viewport {
     }
 
 }
-
-export const viewport = new MyViewport(app);

@@ -1,4 +1,4 @@
-import { Container, DestroyOptions, Graphics, Sprite } from "pixi.js";
+import { Container, DestroyOptions, Sprite } from "pixi.js";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { ConnectionPoint } from './ConnectionPoint';
 import { Coordinate } from "../types/ICoordinate";
@@ -7,7 +7,6 @@ import { StateManager } from "../state/StateManager";
 import { PlaceableType } from "../enums/PlaceableType";
 import { destroy } from "../services/viewport/positionService";
 import { placeableState } from "../state/PlaceableState";
-import { CYAN, placeableDimensions } from "../utils/constants";
 
 export abstract class Placeable extends Container {
     abstract offSprite?: Sprite;
@@ -16,7 +15,6 @@ export abstract class Placeable extends Container {
     abstract outputPoints: ConnectionPoint[];
     abstract inputPoints: ConnectionPoint[];
     abstract rotationHandler: RotationHandler;
-    protected selectionBox = new Graphics().rect(0, 0, placeableDimensions.x, placeableDimensions.y).stroke({ color: CYAN, width: 2 });
 
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
@@ -51,15 +49,6 @@ export abstract class Placeable extends Container {
         const count = [0];
         this.addConnectionPointsToGate(ConnectionPointType.INPUT, this.getInputPoints(), count);
         this.addConnectionPointsToGate(ConnectionPointType.OUTPUT, this.getOutputPoints(), count);
-    }
-
-    public addSelectionBox(): void {
-        this.selectionBox.position.set(-(this.offSprite?.width ?? 0) / 2, -(this.offSprite?.height ?? 0) / 2);
-        this.addChild(this.selectionBox);
-    }
-
-    public removeSelectionBox(): void {
-        this.removeChild(this.selectionBox);
     }
 
     protected addConnectionPointsToGate(type: ConnectionPointType, points: Coordinate[], count: number[]): void {

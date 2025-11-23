@@ -1,5 +1,5 @@
 import { Graphics, Point, FederatedPointerEvent } from 'pixi.js';
-import { viewport } from "../core/viewport";
+import { viewport } from "../core/instances";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { Coordinate } from "../types/ICoordinate";
 import { Wire } from "./Wire";
@@ -24,6 +24,7 @@ export class ConnectionPoint extends Graphics {
         this.type = type;
         this.parentPlaceable = parentPlaceable;
         this.index = index;
+        this.zIndex = Infinity;
         this.render();
     }
 

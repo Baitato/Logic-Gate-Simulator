@@ -1,6 +1,6 @@
 import { Application, Graphics } from "pixi.js";
 import { cellSize } from "../utils/constants";
-import { MyViewport, viewport } from "./viewport";
+import { MyViewport } from "./viewport";
 
 export class Grid extends Graphics {
     viewport: MyViewport;
@@ -50,5 +50,3 @@ export class Grid extends Graphics {
         });
     }
 }
-
-export const grid = new Grid(viewport);

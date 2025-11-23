@@ -1,4 +1,4 @@
-import { viewport } from "../core/viewport";
+import { viewport } from "../core/instances";
 import { ConnectionPoint } from "../models/ConnectionPoint";
 import { Placeable } from "../models/Placeable";
 import { Wire } from "../models/Wire";
@@ -12,10 +12,25 @@ export class StateManager {
     static wireIdCounter: number = 0;
     static gateById: Map<number, Placeable> = new Map<number, Placeable>();
     static wireById: Map<number, Wire> = new Map<number, Wire>();
+    private static instance: StateManager | null = null;
 
-    constructor() {
+    private constructor() {
         window.addEventListener("keydown", (event: KeyboardEvent) => this.onKeyPress(event))
         viewport.on("pointerdown", () => this.onViewportPress(), this);
+    }
+
+    static initialize(): StateManager {
+        if (!StateManager.instance) {
+            StateManager.instance = new StateManager();
+        }
+        return StateManager.instance;
+    }
+
+    static getInstance(): StateManager {
+        if (!StateManager.instance) {
+            throw new Error('StateManager not initialized. Call StateManager.initialize() first.');
+        }
+        return StateManager.instance;
     }
 
     private onViewportPress() {
@@ -43,4 +58,4 @@ export class StateManager {
     }
 }
 
-export const stateManager = new StateManager();
+export const stateManager = StateManager;

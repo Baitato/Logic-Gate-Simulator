@@ -94,9 +94,7 @@ export class Wire extends Graphics {
         this.position.set(0, 0);
 
         if (wireState.selected === this) {
-            this.moveTo(sourcePos.x, sourcePos.y)
-                .lineTo(targetPos.x, targetPos.y)
-                .stroke({ color: CYAN, width: 4 });
+            color = CYAN;
         }
 
         this.moveTo(sourcePos.x, sourcePos.y)

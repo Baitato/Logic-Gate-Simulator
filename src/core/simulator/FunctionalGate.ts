@@ -34,9 +34,39 @@ export class FunctionalGate {
                 return (this.hasOne() ? 1 : this.getOrDefault(0));
             case PlaceableType.SWITCH:
                 return this.value;
+            case PlaceableType.XOR:
+                return this.evaluateXor();
+            case PlaceableType.XNOR:
+                return this.evaluateXnor();
             default:
                 return undefined;
         }
+    }
+
+    evaluateXor(): Value {
+        let onesCount = 0;
+        let hasUndefined = false;
+
+        for (const input of this.inputs) {
+            const val = simulationService.netList.get(input);
+            if (val === undefined) {
+                hasUndefined = true;
+            } else if (val === 1) {
+                onesCount++;
+            }
+        }
+
+        if (hasUndefined) return undefined;
+
+        return onesCount % 2 === 1 ? 1 : 0;
+    }
+
+    evaluateXnor(): Value {
+        const xorResult = this.evaluateXor();
+
+        if (xorResult === undefined) return undefined;
+
+        return xorResult === 1 ? 0 : 1;
     }
 
     hasZero(): boolean {

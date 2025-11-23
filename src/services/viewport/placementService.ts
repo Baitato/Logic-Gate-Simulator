@@ -2,7 +2,7 @@
 import { Point } from 'pixi.js';
 import { getCellCenter } from '../../utils/constants';
 import { getObject, save } from './positionService';
-import { viewport } from '../../core/viewport';
+import { viewport } from '../../core/instances';
 import { Placeable } from '../../models/Placeable';
 import { PlaceableObjectFactory } from '../../factory/PlaceableObjectFactory';
 import { PlaceableType } from '../../enums/PlaceableType';
