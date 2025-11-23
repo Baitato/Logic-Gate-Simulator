@@ -8,5 +8,6 @@ export enum PlaceableType {
     NOR = "nor",
     XOR = "xor",
     XNOR = "xnor",
-    BUFFER = "buffer"
+    BUFFER = "buffer",
+    BULB = "light-off"
 }

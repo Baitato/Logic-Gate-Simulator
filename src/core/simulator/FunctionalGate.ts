@@ -1,4 +1,6 @@
 import { PlaceableType } from "../../enums/PlaceableType"
+import { Bulb } from "../../models/Bulb";
+import { StateManager } from "../../state/StateManager";
 import { simulationService } from "./SimulationService";
 
 export type Value = number | undefined;
@@ -34,6 +36,8 @@ export class FunctionalGate {
                 return (this.hasOne() ? 1 : this.getOrDefault(0));
             case PlaceableType.SWITCH:
                 return this.value;
+            case PlaceableType.BULB:
+                return this.evaluateBulb();
             case PlaceableType.XOR:
                 return this.evaluateXor();
             case PlaceableType.XNOR:
@@ -41,6 +45,15 @@ export class FunctionalGate {
             default:
                 return undefined;
         }
+    }
+
+    evaluateBulb(): Value {
+        const bulb = StateManager.gateById.get(this.gateId);
+
+        if (bulb && bulb instanceof Bulb)
+            bulb.switch(this.hasOne() ? 1 : 0);
+
+        return undefined;
     }
 
     evaluateXor(): Value {

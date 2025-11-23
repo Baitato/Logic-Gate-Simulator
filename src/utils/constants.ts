@@ -1,4 +1,5 @@
 import { PlaceableType } from "../enums/PlaceableType";
+import { Bulb } from "../models/Bulb";
 import { AndGate } from "../models/logic-gate/AndGate";
 import { BufferGate } from "../models/logic-gate/BufferGate";
 import { NandGate } from "../models/logic-gate/NandGate";
@@ -34,6 +35,7 @@ export const gateMap: Record<string, new (x: number, y: number) => Placeable> = 
     [PlaceableType.XNOR]: XnorGate,
     [PlaceableType.BUFFER]: BufferGate,
     [PlaceableType.SWITCH]: Switch,
+    [PlaceableType.BULB]: Bulb,
 };
 
 export const CYAN = 0x40E0D0;

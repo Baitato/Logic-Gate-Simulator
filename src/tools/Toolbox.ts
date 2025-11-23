@@ -78,7 +78,8 @@ export class Toolbox extends Container {
             new PlaceableTool(PlaceableType.XNOR),
             new PlaceableTool(PlaceableType.NOT),
             new PlaceableTool(PlaceableType.BUFFER),
-            new PlaceableTool(PlaceableType.SWITCH)
+            new PlaceableTool(PlaceableType.SWITCH),
+            new PlaceableTool(PlaceableType.BULB),
         ];
 
         return placeableToolIcons;
