@@ -3,33 +3,26 @@ import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
 import { RotationHandler } from "./logic-gate/RotationHandler";
 import { ConnectionPoint } from "./ConnectionPoint";
-import { StateManager } from "../state/StateManager";
-import { placeableState } from "../state/PlaceableState";
+import { placeableState } from "../core/instances";
 import { Coordinate } from "../types/ICoordinate";
 import { loadSprite } from "../utils/assetLoader";
 import { Value } from "../core/simulator/FunctionalGate";
 import { Dimension } from "../types/IDimension";
+import { AssetName } from "../enums/AssetName";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
 export class Bulb extends Placeable {
     type: PlaceableType = PlaceableType.BULB;
-    placeableId: number;
-    static assetName: string = "light-off";
-    static onAssetName: string = "light-on";
+    static assetName: string = AssetName.BULB_OFF;
+    static onAssetName: string = AssetName.BULB_ON;
     rotationHandler: RotationHandler = new RotationHandler(this);
-    offSprite?: Sprite | undefined;
     onSprite?: Sprite | undefined;
     inputPoints: ConnectionPoint[] = [];
     outputPoints: ConnectionPoint[] = [];
 
-    constructor(x: number, y: number) {
-        super(x, y);
-
-        this.setUp(Bulb.assetName);
-
-        this.placeableId = StateManager.gateIdCounter++;
-        StateManager.gateById.set(this.placeableId, this);
+    constructor(x: number, y: number, rotation: number = 0, id?: number) {
+        super(x, y, rotation, id);
 
         this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
     }
@@ -42,14 +35,19 @@ export class Bulb extends Placeable {
         return [];
     }
 
-    protected override async setUp(assetName: string): Promise<void> {
-        this.offSprite = await loadSprite(assetName, dimensions);
+    public override async setUp(): Promise<Bulb> {
+        super.setUp(Bulb.assetName);
+
         this.onSprite = await loadSprite(Bulb.onAssetName, dimensions);
-        this.addChild(this.offSprite);
         this.addChild(this.onSprite);
         this.onSprite.visible = false;
 
         this.addConnectionPoints();
+        return this;
+    }
+
+    public override exportAsString(): string {
+        return `${PlaceableType.BULB},${this.x},${this.y},${this.rotation},${this.placeableId}`;
     }
 
     public switch(value: Value): void {

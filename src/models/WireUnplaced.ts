@@ -1,8 +1,7 @@
 import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
-import { viewport } from "../core/instances";
+import { viewport, unplacedWireState } from "../core/instances";
 import { StateManager } from "../state/StateManager";
-import { unplacedWireState } from "../state/UnplacedWireState";
 
 export class WireUnplaced extends Graphics {
     endPoint: ConnectionPoint | null = null;

@@ -1,7 +1,9 @@
 import { PlaceableType } from '../../enums/PlaceableType';
+import { Clock } from '../../models/Clock';
 import { Placeable } from '../../models/Placeable';
 import { Switch } from '../../models/Switch';
 import { Wire } from '../../models/Wire';
+import { StateManager } from '../../state/StateManager';
 import { getCondensedGraph } from './condensedGraph';
 import { FunctionalGate, Value } from './FunctionalGate';
 
@@ -15,11 +17,7 @@ class SimulationService {
     constructor() { }
 
     public nextIteration(): void {
-        if (this.adjacencyList.size === 0 || SimulationService.cnt > 0) return;
-        // SimulationService.cnt++;
-
         const condensedSccGraph = getCondensedGraph(this.adjacencyList);
-        // console.log(condensedSccGraph);
 
         for (const scc of condensedSccGraph) {
             const nodes = scc.nodes;
@@ -61,6 +59,8 @@ class SimulationService {
                 }
             }
         }
+
+        StateManager.nextTick();
     }
 
     public flipSwitch(switchId: number): void {
@@ -116,7 +116,8 @@ class SimulationService {
         if (this.gates.has(gateId)) {
             this.gates.get(gateId)!.outputs.push(wireId);
         } else {
-            this.gates.set(gateId, new FunctionalGate(gate.type, gate.placeableId, [], [wireId], this.undefinedIfNotSwitch(gate)));
+            console.log(this.getTickRate(gate));
+            this.gates.set(gateId, new FunctionalGate(gate.type, gate.placeableId, [], [wireId], this.undefinedIfNotSwitch(gate), this.getTickRate(gate)));
         }
     }
 
@@ -175,6 +176,12 @@ class SimulationService {
         }
 
         return undefined;
+    }
+
+    private getTickRate(gate: Placeable): number | undefined {
+        if (gate.type === PlaceableType.CLOCK) {
+            return (gate as Clock).getTickRate();
+        }
     }
 }
 

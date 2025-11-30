@@ -3,12 +3,22 @@ import { MyViewport } from './core/viewport';
 import { Grid } from './core/grid';
 import { Toolbox } from './tools/toolbox';
 import { simulationService } from './core/simulator/SimulationService';
-import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance } from './core/instances';
+import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance, setPlaceableStateInstance, setWireStateInstance, setUnplacedWireStateInstance, setTickRateMenuInstance } from './core/instances';
 import { StateManager } from './state/StateManager';
+import { PlaceableState } from './state/PlaceableState';
+import { WireState } from './state/WireState';
+import { UnplacedWireState } from './state/UnplacedWireState';
+import { ClockTickRateMenu } from './tools/ClockTickRateMenu';
 
 async function initializeApp() {
     try {
         console.log('Initializing Logic Gate Simulator...');
+
+        // Initialize state instances first (before any models that need them)
+        setPlaceableStateInstance(new PlaceableState());
+        setWireStateInstance(new WireState());
+        setUnplacedWireStateInstance(new UnplacedWireState());
+        console.log('State instances created');
 
         // Initialize app first
         const app = await ApplicationWrapper.create();
@@ -30,6 +40,10 @@ async function initializeApp() {
         setToolboxInstance(toolbox);
         console.log('Toolbox created');
 
+        const tickRateMenu = await ClockTickRateMenu.create();
+        setTickRateMenuInstance(tickRateMenu);
+        console.log('Tick Rate Menu created');
+
         // Initialize state manager
         StateManager.initialize();
         console.log('State manager initialized');
@@ -38,6 +52,7 @@ async function initializeApp() {
         document.body.appendChild(app.canvas);
         app.stage.addChild(viewport);
         app.stage.addChild(toolbox);
+        app.stage.addChild(tickRateMenu);
         viewport.addChild(grid);
 
         app.ticker.add(() => {

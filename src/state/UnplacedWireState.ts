@@ -1,6 +1,6 @@
-import { WireUnplaced } from "../models/WireUnplaced";
+import type { WireUnplaced } from "../models/WireUnplaced";
 
-class UnplacedWireState {
+export class UnplacedWireState {
     selected: WireUnplaced | null = null;
 
     public unselect() {
@@ -15,5 +15,3 @@ class UnplacedWireState {
         this.selected = null;
     }
 }
-
-export const unplacedWireState = new UnplacedWireState();

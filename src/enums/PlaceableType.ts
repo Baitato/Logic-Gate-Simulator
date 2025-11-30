@@ -1,6 +1,6 @@
 
 export enum PlaceableType {
-    SWITCH = "switch-empty",
+    SWITCH = "switch",
     AND = "and",
     OR = "or",
     NOT = "not",
@@ -9,5 +9,6 @@ export enum PlaceableType {
     XOR = "xor",
     XNOR = "xnor",
     BUFFER = "buffer",
-    BULB = "light-off"
+    BULB = "bulb",
+    CLOCK = "clock",
 }
