@@ -1,15 +1,22 @@
+import { AssetName } from "../../enums/AssetName";
 import { PlaceableType } from "../../enums/PlaceableType";
 import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class BufferGate extends Gate {
     static type: PlaceableType = PlaceableType.BUFFER;
-    static assetName: string = "buffer";
+    static assetName: string = AssetName.BUFFER;
 
-    constructor(x: number, y: number) {
-        super(x, y, BufferGate.type);
+    constructor(x: number, y: number, rotation: number = 0, id?: number) {
+        super(x, y, BufferGate.type, rotation, id);
+    }
 
-        this.setUp(BufferGate.assetName);
+    public override async setUp() {
+        return super.setUp(BufferGate.assetName);
+    }
+
+    public static getAssetName(): string {
+        return BufferGate.assetName;
     }
 
     protected override getInputPoints(): Coordinate[] {

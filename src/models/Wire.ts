@@ -5,7 +5,7 @@ import { StateManager } from "../state/StateManager";
 import { Placeable } from "./Placeable";
 import { simulationService } from "../core/simulator/SimulationService";
 import { Value } from "../core/simulator/FunctionalGate";
-import { wireState } from "../state/WireState";
+import { wireState } from "../core/instances";
 import { CYAN } from "../utils/constants";
 
 export class Wire extends Graphics {
@@ -13,12 +13,11 @@ export class Wire extends Graphics {
     sourcePoint: ConnectionPoint;
     source: Placeable;
     target: Placeable;
-
-    wireId: number;
+    wireId!: number;
 
     private value: Value;
 
-    constructor(sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint) {
+    constructor(sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, id?: number) {
         super();
         this.zIndex = -Infinity;
         this.sourcePoint = sourcePoint;
@@ -27,7 +26,7 @@ export class Wire extends Graphics {
         this.cursor = "pointer";
         this.eventMode = "static";
 
-        this.wireId = StateManager.wireIdCounter++;
+        this.setWireId(id);
 
         if (sourcePoint.type === ConnectionPointType.INPUT) {
             [this.sourcePoint, this.targetPoint] = [this.targetPoint, this.sourcePoint];
@@ -54,6 +53,10 @@ export class Wire extends Graphics {
 
         StateManager.wireById.delete(this.wireId);
         super.destroy();
+    }
+
+    public exportAsString(): string {
+        return `wire,${this.sourcePoint.parentPlaceable.placeableId},${this.sourcePoint.index},${this.targetPoint.parentPlaceable.placeableId},${this.targetPoint.index},${this.wireId}`;
     }
 
     public setValue(value: Value): void {
@@ -100,6 +103,23 @@ export class Wire extends Graphics {
         this.moveTo(sourcePos.x, sourcePos.y)
             .lineTo(targetPos.x, targetPos.y)
             .stroke({ color: color, width: 2 });
+    }
+
+    private setWireId(id?: number): void {
+        if (StateManager.wireById.has(this.wireId)) {
+            console.warn(`Wire ID ${this.wireId} is already in use.`);
+            this.wireId = -1;
+            return;
+        }
+
+        if (id === undefined) {
+            this.wireId = StateManager.wireIdCounter++;
+            StateManager.wireById.set(this.wireId, this);
+        } else {
+            this.wireId = id;
+            StateManager.wireById.set(id, this);
+            StateManager.wireIdCounter = Math.max(StateManager.wireIdCounter, id + 1);
+        }
     }
 
 }

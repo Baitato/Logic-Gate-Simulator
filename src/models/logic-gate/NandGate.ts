@@ -1,15 +1,22 @@
+import { AssetName } from "../../enums/AssetName";
 import { PlaceableType } from "../../enums/PlaceableType";
 import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class NandGate extends Gate {
     static type: PlaceableType = PlaceableType.NAND;
-    static assetName: string = "nand";
+    static assetName: string = AssetName.NAND;
 
-    constructor(x: number, y: number) {
-        super(x, y, NandGate.type);
+    constructor(x: number, y: number, rotation: number = 0, id?: number) {
+        super(x, y, NandGate.type, rotation, id);
+    }
 
-        this.setUp(NandGate.assetName);
+    public override async setUp() {
+        return super.setUp(NandGate.assetName);
+    }
+
+    public static getAssetName(): string {
+        return NandGate.assetName;
     }
 
     protected override getInputPoints(): Coordinate[] {

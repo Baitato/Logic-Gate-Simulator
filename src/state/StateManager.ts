@@ -1,17 +1,17 @@
-import { viewport } from "../core/instances";
+import { viewport, placeableState, wireState, unplacedWireState } from "../core/instances";
 import { ConnectionPoint } from "../models/ConnectionPoint";
 import { Placeable } from "../models/Placeable";
 import { Wire } from "../models/Wire";
-import { placeableState } from "./PlaceableState";
-import { unplacedWireState } from "./UnplacedWireState";
-import { wireState } from "./WireState";
 
 export class StateManager {
     static activeConnectionPoint: ConnectionPoint | null = null;
-    static gateIdCounter: number = 0;
+    static placeableIdCounter: number = 0;
     static wireIdCounter: number = 0;
-    static gateById: Map<number, Placeable> = new Map<number, Placeable>();
+    static placeableById: Map<number, Placeable> = new Map<number, Placeable>();
     static wireById: Map<number, Wire> = new Map<number, Wire>();
+    static currentTick: number = 0;
+    
+    private static MAX_TICKS: number = 4000;
     private static instance: StateManager | null = null;
 
     private constructor() {
@@ -24,6 +24,13 @@ export class StateManager {
             StateManager.instance = new StateManager();
         }
         return StateManager.instance;
+    }
+
+    static nextTick(): number {
+        StateManager.currentTick += 1;
+        StateManager.currentTick %= this.MAX_TICKS;
+
+        return StateManager.currentTick;
     }
 
     static getInstance(): StateManager {

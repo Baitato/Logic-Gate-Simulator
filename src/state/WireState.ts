@@ -1,7 +1,7 @@
 import { FederatedPointerEvent } from "pixi.js";
-import { Wire } from "../models/Wire";
+import type { Wire } from "../models/Wire";
 
-class WireState {
+export class WireState {
     selected: Wire | null = null;
 
     public onSelect(event: FederatedPointerEvent, wire: Wire) {
@@ -16,19 +16,17 @@ class WireState {
     }
 
     public unselect() {
-        if(this.selected == null)
+        if (this.selected == null)
             return;
 
         this.selected = null;
     }
 
     public delete() {
-        if(this.selected == null)
+        if (this.selected == null)
             return;
 
         this.selected.destroy();
         this.selected = null;
     }
 }
-
-export const wireState = new WireState();

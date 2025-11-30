@@ -17,8 +17,8 @@ export function place(event: any, gate: PlaceableType): void {
     initiatePlacement(worldPos.x, worldPos.y, gate);
 }
 
-function initiatePlacement(x: number, y: number, type: string): void {
-    const placeable: Placeable = PlaceableObjectFactory.create(x, y, type);
+async function initiatePlacement(x: number, y: number, type: PlaceableType): Promise<void> {
+    const placeable: Placeable = await PlaceableObjectFactory.create(x, y, type);
     placeable.alpha = 0.6;
 
     curObject = placeable;

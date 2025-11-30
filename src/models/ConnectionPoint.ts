@@ -6,7 +6,7 @@ import { Wire } from "./Wire";
 import { StateManager } from "../state/StateManager";
 import { Placeable } from './Placeable';
 import { WireUnplaced } from './WireUnplaced';
-import { unplacedWireState } from '../state/UnplacedWireState';
+import { unplacedWireState } from '../core/instances';
 
 export class ConnectionPoint extends Graphics {
     type: ConnectionPointType;
@@ -88,6 +88,10 @@ export class ConnectionPoint extends Graphics {
         } else {
             this.resetStates();
         }
+    }
+
+    public addWire(wire: Wire) {
+        this.wires.add(wire);
     }
 
     private resetStates() {

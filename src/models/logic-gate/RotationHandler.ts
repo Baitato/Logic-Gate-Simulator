@@ -14,6 +14,7 @@ export class RotationHandler extends Sprite {
     constructor(parentPlaceable: Placeable) {
         super();
         this.parentPlaceable = parentPlaceable;
+        this.anchor.set(0.5, 0.5);
         this.setupRotationHandler();
     }
 

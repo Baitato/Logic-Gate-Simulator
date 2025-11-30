@@ -11,13 +11,15 @@ export class FunctionalGate {
     inputs: number[];
     outputs: number[];
     value: Value;
+    tickRate?: number;
 
-    constructor(type: PlaceableType, gateId: number, inputs: number[], outputs: number[], value: Value = undefined) {
+    constructor(type: PlaceableType, gateId: number, inputs: number[], outputs: number[], value: Value = undefined, tickRate?: number) {
         this.type = type;
         this.gateId = gateId;
         this.inputs = inputs;
         this.outputs = outputs;
         this.value = value;
+        this.tickRate = tickRate;
     }
 
     evaluate(): Value {
@@ -42,13 +44,20 @@ export class FunctionalGate {
                 return this.evaluateXor();
             case PlaceableType.XNOR:
                 return this.evaluateXnor();
+            case PlaceableType.CLOCK:
+                return this.evaluateClock();
             default:
                 return undefined;
         }
     }
 
+    evaluateClock(): Value {
+        const curTick = StateManager.currentTick % (2 * this.tickRate!);
+        return (curTick < this.tickRate!) ? 0 : 1;
+    }
+
     evaluateBulb(): Value {
-        const bulb = StateManager.gateById.get(this.gateId);
+        const bulb = StateManager.placeableById.get(this.gateId);
 
         if (bulb && bulb instanceof Bulb)
             bulb.switch(this.hasOne() ? 1 : 0);

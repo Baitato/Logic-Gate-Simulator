@@ -1,15 +1,22 @@
+import { AssetName } from "../../enums/AssetName";
 import { PlaceableType } from "../../enums/PlaceableType";
 import { Coordinate } from "../../types/ICoordinate";
 import { Gate } from "./Gate";
 
 export class XorGate extends Gate {
     static type: PlaceableType = PlaceableType.XOR;
-    static assetName: string = "xor";
+    static assetName: string = AssetName.XOR;
 
-    constructor(x: number, y: number) {
-        super(x, y, XorGate.type);
+    constructor(x: number, y: number, rotation: number = 0, id?: number) {
+        super(x, y, XorGate.type, rotation, id);
+    }
 
-        this.setUp(XorGate.assetName);
+    public override async setUp() {
+        return super.setUp(XorGate.assetName);
+    }
+
+    public static getAssetName(): string {
+        return XorGate.assetName;
     }
 
     protected override getInputPoints(): Coordinate[] {

@@ -4,33 +4,27 @@ import { ConnectionPoint } from "./ConnectionPoint";
 import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
 import { loadSprite } from "../utils/assetLoader";
-import { StateManager } from "../state/StateManager";
 import { RotationHandler } from './logic-gate/RotationHandler';
 import { PlaceableType } from "../enums/PlaceableType";
 import { simulationService } from "../core/simulator/SimulationService";
-import { placeableState } from "../state/PlaceableState";
+import { placeableState } from "../core/instances";
+import { AssetName } from "../enums/AssetName";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
 export class Switch extends Placeable {
     type: PlaceableType = PlaceableType.SWITCH;
-    placeableId: number;
-    static assetName: string = "switch-empty"
-    static onAssetName: string = "on-switch"
+    static onAssetName: string = AssetName.SWITCH_ON;
+    static assetName: string = AssetName.SWITCH_OFF;
     rotationHandler: RotationHandler = new RotationHandler(this);
-    offSprite?: Sprite | undefined;
     onSprite?: Sprite | undefined;
     outputPoints: ConnectionPoint[] = [];
     inputPoints: ConnectionPoint[] = [];
     isOn: boolean = false;
 
-    constructor(x: number, y: number) {
-        super(x, y);
-
-        this.setUp(Switch.assetName);
-
-        this.placeableId = StateManager.gateIdCounter++;
-        StateManager.gateById.set(this.placeableId, this);
+    constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false, id?: number) {
+        super(x, y, rotation, id);
+        this.isOn = isOn;
 
         this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
     }
@@ -43,15 +37,19 @@ export class Switch extends Placeable {
         return [{ x: 25, y: 0 }];
     }
 
-    protected override async setUp(assetName: string): Promise<void> {
-        this.offSprite = await loadSprite(assetName, dimensions);
-        this.onSprite = await loadSprite(Switch.onAssetName, dimensions);
-        this.addChild(this.offSprite);
-        this.addChild(this.onSprite);
-        this.onSprite.visible = false;
+    public override async setUp(): Promise<Switch> {
+        super.setUp(Switch.assetName);
 
+        this.onSprite = await loadSprite(Switch.onAssetName, dimensions);
+        this.addChild(this.onSprite);
+
+        this.render();
         this.addClickableArea();
-        this.addConnectionPoints();
+        return this;
+    }
+
+    public override exportAsString(): string {
+        return `${PlaceableType.SWITCH},${this.x},${this.y},${this.rotation},${this.isOn},${this.placeableId}`;
     }
 
     private addClickableArea(): void {
@@ -69,6 +67,12 @@ export class Switch extends Placeable {
     private toggleSwitch(): void {
         this.isOn = !this.isOn;
 
+        this.render();
+
+        simulationService.flipSwitch(this.placeableId);
+    }
+
+    private render() {
         if (this.isOn) {
             this.onSprite!.visible = true;
             this.offSprite!.visible = false;
@@ -76,7 +80,5 @@ export class Switch extends Placeable {
             this.onSprite!.visible = false;
             this.offSprite!.visible = true;
         }
-
-        simulationService.flipSwitch(this.placeableId);
     }
 }
