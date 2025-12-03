@@ -1,7 +1,6 @@
 import { PlaceableType } from "../../enums/PlaceableType"
 import { Bulb } from "../../models/Bulb";
 import { StateManager } from "../../state/StateManager";
-import { simulationService } from "./SimulationService";
 
 export type Value = number | undefined;
 
@@ -22,28 +21,28 @@ export class FunctionalGate {
         this.tickRate = tickRate;
     }
 
-    evaluate(): Value {
+    evaluate(netList: Map<number, Value>): Value {
         switch (this.type) {
             case PlaceableType.AND:
-                return (this.hasZero() ? 0 : this.getOrDefault(1));
+                return (this.hasZero(netList) ? 0 : this.getOrDefault(netList, 1));
             case PlaceableType.NAND:
-                return (this.hasZero() ? 1 : this.getOrDefault(0));
+                return (this.hasZero(netList) ? 1 : this.getOrDefault(netList, 0));
             case PlaceableType.OR:
-                return (this.hasOne() ? 1 : this.getOrDefault(0));
+                return (this.hasOne(netList) ? 1 : this.getOrDefault(netList, 0));
             case PlaceableType.NOR:
-                return (this.hasOne() ? 0 : this.getOrDefault(1));
+                return (this.hasOne(netList) ? 0 : this.getOrDefault(netList, 1));
             case PlaceableType.NOT:
-                return (this.hasOne() ? 0 : this.getOrDefault(1));
+                return (this.hasOne(netList) ? 0 : this.getOrDefault(netList, 1));
             case PlaceableType.BUFFER:
-                return (this.hasOne() ? 1 : this.getOrDefault(0));
+                return (this.hasOne(netList) ? 1 : this.getOrDefault(netList, 0));
             case PlaceableType.SWITCH:
                 return this.value;
             case PlaceableType.BULB:
-                return this.evaluateBulb();
+                return this.evaluateBulb(netList);
             case PlaceableType.XOR:
-                return this.evaluateXor();
+                return this.evaluateXor(netList);
             case PlaceableType.XNOR:
-                return this.evaluateXnor();
+                return this.evaluateXnor(netList);
             case PlaceableType.CLOCK:
                 return this.evaluateClock();
             default:
@@ -56,21 +55,21 @@ export class FunctionalGate {
         return (curTick < this.tickRate!) ? 0 : 1;
     }
 
-    evaluateBulb(): Value {
+    evaluateBulb(netList: Map<number, Value>): Value {
         const bulb = StateManager.placeableById.get(this.gateId);
 
         if (bulb && bulb instanceof Bulb)
-            bulb.switch(this.hasOne() ? 1 : 0);
+            bulb.switch(this.hasOne(netList) ? 1 : 0);
 
         return undefined;
     }
 
-    evaluateXor(): Value {
+    evaluateXor(netList: Map<number, Value>): Value {
         let onesCount = 0;
         let hasUndefined = false;
 
         for (const input of this.inputs) {
-            const val = simulationService.netList.get(input);
+            const val = netList.get(input);
             if (val === undefined) {
                 hasUndefined = true;
             } else if (val === 1) {
@@ -83,37 +82,37 @@ export class FunctionalGate {
         return onesCount % 2 === 1 ? 1 : 0;
     }
 
-    evaluateXnor(): Value {
-        const xorResult = this.evaluateXor();
+    evaluateXnor(netList: Map<number, Value>): Value {
+        const xorResult = this.evaluateXor(netList);
 
         if (xorResult === undefined) return undefined;
 
         return xorResult === 1 ? 0 : 1;
     }
 
-    hasZero(): boolean {
+    hasZero(netList: Map<number, Value>): boolean {
         for (const input of this.inputs) {
-            if (simulationService.netList.get(input) === 0) {
+            if (netList.get(input) === 0) {
                 return true;
             }
         }
         return false;
     }
 
-    hasOne(): boolean {
+    hasOne(netList: Map<number, Value>): boolean {
         for (const input of this.inputs) {
-            if (simulationService.netList.get(input) === 1) {
+            if (netList.get(input) === 1) {
                 return true;
             }
         }
         return false;
     }
 
-    getOrDefault(def: Value): Value {
+    getOrDefault(netList: Map<number, Value>, def: Value): Value {
         let undef = true;
 
         for (const input of this.inputs) {
-            if (simulationService.netList.get(input) != undefined) {
+            if (netList.get(input) != undefined) {
                 undef = false;
                 break;
             }

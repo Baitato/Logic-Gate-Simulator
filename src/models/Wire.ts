@@ -1,12 +1,12 @@
 import { Graphics } from "pixi.js";
-import { ConnectionPoint } from './ConnectionPoint';
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { StateManager } from "../state/StateManager";
-import { Placeable } from "./Placeable";
 import { simulationService } from "../core/simulator/SimulationService";
-import { Value } from "../core/simulator/FunctionalGate";
 import { wireState } from "../core/instances";
 import { CYAN } from "../utils/constants";
+import type { ConnectionPoint } from './ConnectionPoint';
+import type { Placeable } from "./Placeable";
+import type { Value } from "../core/simulator/FunctionalGate";
 
 export class Wire extends Graphics {
     targetPoint: ConnectionPoint;

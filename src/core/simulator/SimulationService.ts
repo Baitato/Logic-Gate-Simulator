@@ -1,13 +1,13 @@
 import { PlaceableType } from '../../enums/PlaceableType';
+import { StateManager } from '../../state/StateManager';
+import { getCondensedGraph } from './condensedGraph';
+import { FunctionalGate, type Value } from './FunctionalGate';
 import { Clock } from '../../models/Clock';
 import { Placeable } from '../../models/Placeable';
 import { Switch } from '../../models/Switch';
 import { Wire } from '../../models/Wire';
-import { StateManager } from '../../state/StateManager';
-import { getCondensedGraph } from './condensedGraph';
-import { FunctionalGate, Value } from './FunctionalGate';
 
-class SimulationService {
+export class SimulationService {
     public wires: Map<number, Wire> = new Map();
     public gates: Map<number, FunctionalGate> = new Map();
     public adjacencyList: Map<number, Set<number>> = new Map();
@@ -25,7 +25,7 @@ class SimulationService {
             if (nodes.length === 1) {
                 const nodeId = nodes[0];
                 const gate = this.gates.get(nodeId)!;
-                const newValue = gate.evaluate();
+                const newValue = gate.evaluate(this.netList);
 
                 this.setOutputValues(gate, newValue);
             } else {
@@ -36,7 +36,7 @@ class SimulationService {
 
                     for (const nodeId of nodes) {
                         const gate = this.gates.get(nodeId)!;
-                        const newValue = gate.evaluate();
+                        const newValue = gate.evaluate(this.netList);
 
                         if (newValue !== gate.value) {
                             changed = true;
@@ -116,7 +116,6 @@ class SimulationService {
         if (this.gates.has(gateId)) {
             this.gates.get(gateId)!.outputs.push(wireId);
         } else {
-            console.log(this.getTickRate(gate));
             this.gates.set(gateId, new FunctionalGate(gate.type, gate.placeableId, [], [wireId], this.undefinedIfNotSwitch(gate), this.getTickRate(gate)));
         }
     }

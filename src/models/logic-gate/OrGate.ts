@@ -7,8 +7,8 @@ export class OrGate extends Gate {
     static type: PlaceableType = PlaceableType.OR;
     static assetName: string = AssetName.OR;
 
-    constructor(x: number, y: number, rotation: number = 0, id?: number) {
-        super(x, y, OrGate.type, rotation, id);
+    constructor(x: number, y: number, rotation: number = 0) {
+        super(x, y, OrGate.type, rotation);
     }
 
     public override async setUp() {

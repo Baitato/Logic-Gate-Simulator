@@ -4,9 +4,9 @@ import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { Coordinate } from "../types/ICoordinate";
 import { Wire } from "./Wire";
 import { StateManager } from "../state/StateManager";
-import { Placeable } from './Placeable';
 import { WireUnplaced } from './WireUnplaced';
 import { unplacedWireState } from '../core/instances';
+import type { Placeable } from './Placeable';
 
 export class ConnectionPoint extends Graphics {
     type: ConnectionPointType;

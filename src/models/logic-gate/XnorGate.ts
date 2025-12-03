@@ -7,8 +7,8 @@ export class XnorGate extends Gate {
     static type: PlaceableType = PlaceableType.XNOR;
     static assetName: string = AssetName.XNOR;
 
-    constructor(x: number, y: number, rotation: number = 0, id?: number) {
-        super(x, y, XnorGate.type, rotation, id);
+    constructor(x: number, y: number, rotation: number = 0) {
+        super(x, y, XnorGate.type, rotation);
     }
 
     public override async setUp() {

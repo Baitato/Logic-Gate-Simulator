@@ -1,12 +1,10 @@
 import { Coordinate } from "../../types/ICoordinate";
 import { ConnectionPoint } from "../ConnectionPoint";
-import { RotationHandler } from "./RotationHandler";
 import { Placeable } from "../Placeable";
 import { PlaceableType } from '../../enums/PlaceableType';
 import { placeableState } from "../../core/instances";
 
 export abstract class Gate extends Placeable {
-    rotationHandler: RotationHandler = new RotationHandler(this);
     outputPoints: ConnectionPoint[] = [];
     inputPoints: ConnectionPoint[] = [];
     type: PlaceableType;
@@ -14,14 +12,14 @@ export abstract class Gate extends Placeable {
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
 
-    constructor(x: number, y: number, type: PlaceableType, rotation: number = 0, id?: number) {
-        super(x, y, rotation, id);
+    constructor(x: number, y: number, type: PlaceableType, rotation: number = 0) {
+        super(x, y, rotation);
 
         this.type = type;
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
+        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
-    public override exportAsString(): string {
-        return `${this.type},${this.x},${this.y},${this.rotation},${this.placeableId}`;
+    public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {
+        return `${this.type},${this.x + offsetX},${this.y + offsetY},${this.rotation},${this.placeableId}`;
     }
 }

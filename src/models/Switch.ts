@@ -4,7 +4,6 @@ import { ConnectionPoint } from "./ConnectionPoint";
 import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
 import { loadSprite } from "../utils/assetLoader";
-import { RotationHandler } from './logic-gate/RotationHandler';
 import { PlaceableType } from "../enums/PlaceableType";
 import { simulationService } from "../core/simulator/SimulationService";
 import { placeableState } from "../core/instances";
@@ -16,17 +15,16 @@ export class Switch extends Placeable {
     type: PlaceableType = PlaceableType.SWITCH;
     static onAssetName: string = AssetName.SWITCH_ON;
     static assetName: string = AssetName.SWITCH_OFF;
-    rotationHandler: RotationHandler = new RotationHandler(this);
     onSprite?: Sprite | undefined;
     outputPoints: ConnectionPoint[] = [];
     inputPoints: ConnectionPoint[] = [];
     isOn: boolean = false;
 
-    constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false, id?: number) {
-        super(x, y, rotation, id);
+    constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false) {
+        super(x, y, rotation);
         this.isOn = isOn;
 
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
+        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -48,8 +46,8 @@ export class Switch extends Placeable {
         return this;
     }
 
-    public override exportAsString(): string {
-        return `${PlaceableType.SWITCH},${this.x},${this.y},${this.rotation},${this.isOn},${this.placeableId}`;
+    public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {
+        return `${PlaceableType.SWITCH},${this.x + offsetX},${this.y + offsetY},${this.rotation},${this.isOn},${this.placeableId}`;
     }
 
     private addClickableArea(): void {

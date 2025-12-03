@@ -8,6 +8,7 @@ import { BaseTool } from "./BaseTool";
 import { ImportTool } from "./ImportTool";
 import { ExportTool } from "./ExportTool";
 import { MiscTool } from "./MiscTool";
+import { importService } from "../core/instances";
 
 const toolboxWidth = 145;
 const elementpadding = 20;
@@ -95,7 +96,7 @@ export class Toolbox extends Container {
 
     private getMiscToolIcons(): BaseTool[] {
         const miscToolIcons: BaseTool[] = [
-            new ImportTool(AssetName.IMPORT),
+            new ImportTool(AssetName.IMPORT, importService),
             new ExportTool(AssetName.EXPORT),
         ];
 

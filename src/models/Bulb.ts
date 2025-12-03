@@ -1,7 +1,6 @@
 import { Sprite } from "pixi.js";
 import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
-import { RotationHandler } from "./logic-gate/RotationHandler";
 import { ConnectionPoint } from "./ConnectionPoint";
 import { placeableState } from "../core/instances";
 import { Coordinate } from "../types/ICoordinate";
@@ -16,15 +15,14 @@ export class Bulb extends Placeable {
     type: PlaceableType = PlaceableType.BULB;
     static assetName: string = AssetName.BULB_OFF;
     static onAssetName: string = AssetName.BULB_ON;
-    rotationHandler: RotationHandler = new RotationHandler(this);
     onSprite?: Sprite | undefined;
     inputPoints: ConnectionPoint[] = [];
     outputPoints: ConnectionPoint[] = [];
 
-    constructor(x: number, y: number, rotation: number = 0, id?: number) {
-        super(x, y, rotation, id);
+    constructor(x: number, y: number, rotation: number = 0) {
+        super(x, y, rotation);
 
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this, this.rotationHandler));
+        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -46,8 +44,8 @@ export class Bulb extends Placeable {
         return this;
     }
 
-    public override exportAsString(): string {
-        return `${PlaceableType.BULB},${this.x},${this.y},${this.rotation},${this.placeableId}`;
+    public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {
+        return `${PlaceableType.BULB},${this.x + offsetX},${this.y + offsetY},${this.rotation},${this.placeableId}`;
     }
 
     public switch(value: Value): void {
