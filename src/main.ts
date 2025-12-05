@@ -3,19 +3,30 @@ import { MyViewport } from './core/viewport';
 import { Grid } from './core/grid';
 import { Toolbox } from './tools/toolbox';
 import { simulationService } from './core/simulator/SimulationService';
-import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance, setPlaceableStateInstance, setWireStateInstance, setUnplacedWireStateInstance, setTickRateMenuInstance } from './core/instances';
+import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance, setPlaceableStateInstance, setWireStateInstance, setUnplacedWireStateInstance, setTickRateMenuInstance, setRotationHandlerInstance, setSelectionServiceInstance, setCopyPasteServiceInstance, setImportServiceInstance } from './core/instances';
 import { StateManager } from './state/StateManager';
 import { PlaceableState } from './state/PlaceableState';
 import { WireState } from './state/WireState';
 import { UnplacedWireState } from './state/UnplacedWireState';
 import { ClockTickRateMenu } from './tools/ClockTickRateMenu';
+import { RotationHandler } from './models/logic-gate/RotationHandler';
+import { SelectionService } from './services/SelectionService';
+import { CopyPasteService } from './services/CopyPasteService';
+import { ImportService } from './services/ImportService';
 
 async function initializeApp() {
     try {
         console.log('Initializing Logic Gate Simulator...');
 
+        const rotationHandler = await new RotationHandler().setupRotationHandler();
+        setRotationHandlerInstance(rotationHandler);
+
+        const tickRateMenu = await ClockTickRateMenu.create();
+        setTickRateMenuInstance(tickRateMenu);
+        console.log('Tick Rate Menu created');
+
         // Initialize state instances first (before any models that need them)
-        setPlaceableStateInstance(new PlaceableState());
+        setPlaceableStateInstance(new PlaceableState(simulationService, rotationHandler, tickRateMenu));
         setWireStateInstance(new WireState());
         setUnplacedWireStateInstance(new UnplacedWireState());
         console.log('State instances created');
@@ -35,18 +46,41 @@ async function initializeApp() {
         setGridInstance(grid);
         console.log('Grid created');
 
+        const importService = new ImportService();
+        setImportServiceInstance(importService);
+        console.log('Import service initialized');
+
         // Initialize toolbox
         const toolbox = await Toolbox.create();
         setToolboxInstance(toolbox);
         console.log('Toolbox created');
 
-        const tickRateMenu = await ClockTickRateMenu.create();
-        setTickRateMenuInstance(tickRateMenu);
-        console.log('Tick Rate Menu created');
-
         // Initialize state manager
         StateManager.initialize();
         console.log('State manager initialized');
+
+        const selectionService = new SelectionService(viewport);
+        setSelectionServiceInstance(selectionService);
+        console.log('Copy service initialized');
+
+        const copyPasteService = new CopyPasteService(importService, selectionService);
+        setCopyPasteServiceInstance(copyPasteService);
+        console.log('Selection service initialized');
+
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'c') {
+                copyPasteService.copy();
+            }
+        });
+
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'v') {
+                const interaction = app.renderer.events;
+                const pos = interaction.pointer.global;
+
+                copyPasteService.paste(pos);
+            }
+        });
 
         // Assemble the scene
         document.body.appendChild(app.canvas);

@@ -2,7 +2,6 @@ import { Container, DestroyOptions, Sprite } from "pixi.js";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { ConnectionPoint } from './ConnectionPoint';
 import { Coordinate } from "../types/ICoordinate";
-import { RotationHandler } from './logic-gate/RotationHandler';
 import { StateManager } from "../state/StateManager";
 import { PlaceableType } from "../enums/PlaceableType";
 import { destroy } from "../services/viewport/positionService";
@@ -14,22 +13,21 @@ export abstract class Placeable extends Container {
     abstract type: PlaceableType;
     abstract outputPoints: ConnectionPoint[];
     abstract inputPoints: ConnectionPoint[];
-    abstract rotationHandler: RotationHandler;
 
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
-    public abstract exportAsString(): string;
+    public abstract exportAsString(offsetX?: number, offsetY?: number): string;
 
     offSprite?: Sprite;
     placeableId!: number;
     connectionPointMap: Map<number, ConnectionPoint> = new Map<number, ConnectionPoint>();
 
-    constructor(x: number, y: number, rotation: number = 0, id?: number) {
+    constructor(x: number, y: number, rotation: number = 0) {
         super();
         this.x = x;
         this.y = y;
         this.rotation = rotation
-        this.setPlaceableId(id);
+        this.setPlaceableId();
         this.eventMode = "static";
     }
 
@@ -41,21 +39,9 @@ export abstract class Placeable extends Container {
         return this;
     }
 
-    private setPlaceableId(id?: number): void {
-        if (StateManager.placeableById.has(this.placeableId)) {
-            console.warn(`Placeable ID ${this.placeableId} is already in use.`);
-            this.placeableId = -1;
-            return;
-        }
-
-        if (id === undefined) {
-            this.placeableId = StateManager.placeableIdCounter++;
-            StateManager.placeableById.set(this.placeableId, this);
-        } else {
-            this.placeableId = id;
-            StateManager.placeableById.set(id, this);
-            StateManager.placeableIdCounter = Math.max(StateManager.placeableIdCounter, id + 1);
-        }
+    private setPlaceableId(): void {
+        this.placeableId = StateManager.generatePlaceableId();
+        StateManager.placeableById.set(this.placeableId, this);
     }
 
     public destroy(options?: DestroyOptions): void {
@@ -69,6 +55,10 @@ export abstract class Placeable extends Container {
         destroy(this.x, this.y);
         StateManager.placeableById.delete(this.placeableId);
         super.destroy(options);
+    }
+
+    public getAllConnectionPoints(): ConnectionPoint[] {
+        return [...this.inputPoints, ...this.outputPoints];
     }
 
     public getConnectionPoint(index: number): ConnectionPoint {

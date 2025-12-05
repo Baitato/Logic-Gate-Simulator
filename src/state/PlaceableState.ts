@@ -1,26 +1,38 @@
 import { FederatedPointerEvent } from "pixi.js";
+import { Clock } from "../models/Clock";
+import { SimulationService } from "../core/simulator/SimulationService";
+import { ClockTickRateMenu } from "../tools/ClockTickRateMenu";
+import { PlaceableType } from "../enums/PlaceableType";
 import type { RotationHandler } from "../models/logic-gate/RotationHandler";
 import type { Placeable } from "../models/Placeable";
-import { Clock } from "../models/Clock";
-import { tickRateMenu } from "../core/instances";
 
 export class PlaceableState {
     selected: Placeable | null = null;
+    private simulationService: SimulationService;
+    private rotationHandler: RotationHandler;
+    private tickRateMenu: ClockTickRateMenu;
 
-    public onSelect(event: FederatedPointerEvent, placeable: Placeable, rotationHandler: RotationHandler) {
+    public constructor(simulationService: SimulationService, rotationHandler: RotationHandler, tickRateMenu: ClockTickRateMenu) {
+        this.simulationService = simulationService;
+        this.rotationHandler = rotationHandler;
+        this.tickRateMenu = tickRateMenu;
+    }
+
+    public onSelect(event: FederatedPointerEvent, placeable: Placeable) {
         event.stopPropagation();
         this.unselect();
 
-        this.select(placeable, rotationHandler);
+        this.select(placeable);
     }
 
-    public select(placeable: Placeable, rotationHandler: RotationHandler) {
+    public select(placeable: Placeable) {
         this.selected = placeable;
-        this.selected.addChild(rotationHandler);
+        this.rotationHandler.addRotationHandler(placeable);
+        this.selected.addChild(this.rotationHandler);
 
-        if (placeable instanceof Clock) {
-            tickRateMenu.visible = true;
-            tickRateMenu.setValue(placeable.getTickRate());
+        if (placeable.type === PlaceableType.CLOCK) {
+            this.tickRateMenu.visible = true;
+            this.tickRateMenu.setValue((placeable as Clock).getTickRate());
         }
     }
 
@@ -28,13 +40,15 @@ export class PlaceableState {
         if (this.selected == null)
             return;
 
+        this.rotationHandler.cleanUp();
+
         const placeable = this.selected;
         if (placeable instanceof Clock) {
-            tickRateMenu.visible = false;
-            placeable.setTickRate(tickRateMenu.getValue());
+            this.tickRateMenu.visible = false;
+            placeable.setTickRate(this.simulationService.gates, this.tickRateMenu.getValue());
         }
 
-        this.selected.removeChild(this.selected.rotationHandler);
+        this.selected.removeChild(this.rotationHandler);
         this.selected = null;
     }
 

@@ -6,6 +6,10 @@ import { ClockTickRateMenu } from '../tools/ClockTickRateMenu';
 import type { PlaceableState } from '../state/PlaceableState';
 import type { WireState } from '../state/WireState';
 import type { UnplacedWireState } from '../state/UnplacedWireState';
+import { RotationHandler } from '../models/logic-gate/RotationHandler';
+import type { SelectionService } from '../services/SelectionService';
+import type { CopyPasteService } from '../services/CopyPasteService';
+import type { ImportService } from '../services/ImportService';
 
 // Global singleton instances
 let appInstance: ApplicationWrapper | null = null;
@@ -14,8 +18,12 @@ let gridInstance: Grid | null = null;
 let toolboxInstance: Toolbox | null = null;
 let tickRateMenuInstance: ClockTickRateMenu | null = null;
 let placeableStateInstance: PlaceableState | null = null;
+let rotationHandlerInstance: RotationHandler | null = null;
 let wireStateInstance: WireState | null = null;
 let unplacedWireStateInstance: UnplacedWireState | null = null;
+let selectionServiceInstance: SelectionService | null = null;
+let copyPasteServiceInstance: CopyPasteService | null = null;
+let importServiceInstance: ImportService | null = null;
 
 export function setAppInstance(instance: ApplicationWrapper): void {
     appInstance = instance;
@@ -72,6 +80,10 @@ export function getTickRateMenu(): ClockTickRateMenu {
     return tickRateMenuInstance;
 }
 
+export function setRotationHandlerInstance(instance: RotationHandler): void {
+    rotationHandlerInstance = instance;
+}
+
 export function setPlaceableStateInstance(instance: PlaceableState): void {
     placeableStateInstance = instance;
 }
@@ -82,6 +94,26 @@ export function setWireStateInstance(instance: WireState): void {
 
 export function setUnplacedWireStateInstance(instance: UnplacedWireState): void {
     unplacedWireStateInstance = instance;
+}
+
+export function setSelectionServiceInstance(instance: SelectionService): void {
+    selectionServiceInstance = instance;
+}
+
+export function setCopyPasteServiceInstance(instance: CopyPasteService): void {
+    copyPasteServiceInstance = instance;
+}
+
+export function setImportServiceInstance(instance: ImportService): void {
+    importServiceInstance = instance;
+}
+
+export function getRotationHandler(): RotationHandler {
+    if (!rotationHandlerInstance) {
+        throw new Error('RotationHandler not initialized. Call initializeApp() first.');
+    }
+
+    return rotationHandlerInstance;
 }
 
 export function getPlaceableState(): PlaceableState {
@@ -103,6 +135,27 @@ export function getUnplacedWireState(): UnplacedWireState {
         throw new Error('UnplacedWireState not initialized. Call initializeApp() first.');
     }
     return unplacedWireStateInstance;
+}
+
+export function getSelectionService(): SelectionService {
+    if (!selectionServiceInstance) {
+        throw new Error('SelectionService not initialized. Call initializeApp() first.');
+    }
+    return selectionServiceInstance;
+}
+
+export function getCopyPasteService(): CopyPasteService {
+    if (!copyPasteServiceInstance) {
+        throw new Error('CopyPasteService not initialized. Call initializeApp() first.');
+    }
+    return copyPasteServiceInstance;
+}
+
+export function getImportService(): ImportService {
+    if (!importServiceInstance) {
+        throw new Error('ImportService not initialized. Call initializeApp() first.');
+    }
+    return importServiceInstance;
 }
 
 // Compatibility exports for existing code
@@ -166,6 +219,36 @@ export const unplacedWireState = new Proxy({} as UnplacedWireState, {
     },
     set(_target, prop, value) {
         (getUnplacedWireState() as unknown as Record<string | symbol, unknown>)[prop] = value;
+        return true;
+    }
+});
+
+export const selectionService = new Proxy({} as SelectionService, {
+    get(_target, prop) {
+        return getSelectionService()[prop as keyof SelectionService];
+    },
+    set(_target, prop, value) {
+        (getSelectionService() as unknown as Record<string | symbol, unknown>)[prop] = value;
+        return true;
+    }
+});
+
+export const copyPasteService = new Proxy({} as CopyPasteService, {
+    get(_target, prop) {
+        return getCopyPasteService()[prop as keyof CopyPasteService];
+    },
+    set(_target, prop, value) {
+        (getCopyPasteService() as unknown as Record<string | symbol, unknown>)[prop] = value;
+        return true;
+    }
+});
+
+export const importService = new Proxy({} as ImportService, {
+    get(_target, prop) {
+        return getImportService()[prop as keyof ImportService];
+    },
+    set(_target, prop, value) {
+        (getImportService() as unknown as Record<string | symbol, unknown>)[prop] = value;
         return true;
     }
 });

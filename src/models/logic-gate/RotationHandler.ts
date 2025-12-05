@@ -1,24 +1,22 @@
 import { FederatedPointerEvent, Sprite } from "pixi.js";
 import { loadTexture } from "../../utils/assetLoader";
 import { placeableDimensions } from "../../utils/constants";
-import { viewport } from "../../core/instances";
 import { Placeable } from "../Placeable";
 
 export class RotationHandler extends Sprite {
-    parentPlaceable: Placeable;
     startPointerAngle: number = 0;
     startRotation: number = 0;
-    private readonly pointerMoveListener = (event: FederatedPointerEvent) => this.onPointerMove(event);
-    private readonly pointerUpListener = () => this.onPointerUp();
+    private pointerMoveListener?: (event: FederatedPointerEvent) => void;
+    private pointerUpListener?: () => void;
+    private pointerDownListener?: (event: FederatedPointerEvent) => void;
 
-    constructor(parentPlaceable: Placeable) {
+    constructor() {
         super();
-        this.parentPlaceable = parentPlaceable;
         this.anchor.set(0.5, 0.5);
         this.setupRotationHandler();
     }
 
-    async setupRotationHandler(): Promise<void> {
+    async setupRotationHandler(): Promise<RotationHandler> {
         this.texture = await loadTexture("rotate");
 
         this.y = -(placeableDimensions.y) / 2 - 10;
@@ -27,51 +25,70 @@ export class RotationHandler extends Sprite {
         this.eventMode = "static";
         this.cursor = "pointer";
         this.zIndex = -10;
-        this.on("pointerdown", this.onPointerDown);
+        this.visible = false;
+
+        return this;
     }
 
-    setupRotationEvents(): void {
-        viewport.on("pointermove", this.pointerMoveListener);
-        viewport.on("pointerup", this.pointerUpListener);
+    addRotationHandler(placeable: Placeable): void {
+        this.visible = true;
+        this.pointerDownListener = (event) => this.onPointerDown(event, placeable);
+        this.on("pointerdown", this.pointerDownListener);
     }
 
-    onPointerDown(event: FederatedPointerEvent): void {
+    setupRotationEvents(placeable: Placeable): void {
+        this.pointerMoveListener = (event) => this.onPointerMove(event, placeable);
+        this.on("globalpointermove", this.pointerMoveListener);
+
+        this.pointerUpListener = () => this.onPointerUp(placeable);
+        this.on("pointerupoutside", this.pointerUpListener);
+        this.on("pointerup", this.pointerUpListener);
+    }
+
+    onPointerDown(event: FederatedPointerEvent, placeable: Placeable): void {
         event.stopPropagation();
 
-        this.startRotation = this.parentPlaceable.rotation;
-        const localPos = this.parentPlaceable.toLocal(event.global);
+        this.startRotation = placeable.rotation;
+        const localPos = placeable.toLocal(event.global);
         this.startPointerAngle = Math.atan2(localPos.y, localPos.x);
 
-        this.setupRotationEvents();
+        this.setupRotationEvents(placeable);
     }
 
-    onPointerMove(event: FederatedPointerEvent) {
-        const localPos = this.parentPlaceable.toLocal(event.global);
+    onPointerMove(event: FederatedPointerEvent, placeable: Placeable): void {
+        const localPos = placeable.toLocal(event.global);
         const currentAngle = Math.atan2(localPos.y, localPos.x);
         const deltaAngle = currentAngle - this.startPointerAngle;
 
         // Apply smoothed rotation relative to the starting rotation
         const targetRotation = this.startRotation + deltaAngle;
-        this.parentPlaceable.rotation = this.smoothRotation(
-            this.parentPlaceable.rotation,
+        placeable.rotation = this.smoothRotation(
+            placeable.rotation,
             targetRotation
         );
 
-        this.parentPlaceable.renderWires();
+        placeable.renderWires();
     }
 
-    onPointerUp(): void {
+    onPointerUp(placeable: Placeable): void {
         // Snap the rotation to the nearest 90-degree increment
-        const snappedRotation = Math.round(this.parentPlaceable.rotation / (Math.PI / 2)) * (Math.PI / 2);
-        this.parentPlaceable.rotation = snappedRotation;
-        this.parentPlaceable.renderWires();
+        const snappedRotation = Math.round(placeable.rotation / (Math.PI / 2)) * (Math.PI / 2);
+        placeable.rotation = snappedRotation;
+        placeable.renderWires();
 
         this.cleanupRotationEvents();
     }
 
     cleanupRotationEvents(): void {
-        viewport.off("pointermove", this.pointerMoveListener);
-        viewport.off("pointerup", this.pointerUpListener);
+        this.off("globalpointermove", this.pointerMoveListener);
+        this.off("pointerupoutside", this.pointerUpListener);
+        this.off("pointerup", this.pointerUpListener);
+    }
+
+    cleanUp(): void {
+        this.visible = false;
+        this.off("pointerdown", this.pointerDownListener);
+        this.cleanupRotationEvents();
     }
 
     smoothRotation(currentRotation: number, targetRotation: number, smoothingFactor = 0.2): number {
