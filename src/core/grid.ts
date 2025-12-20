@@ -1,18 +1,30 @@
-import { Application, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { cellSize } from "../utils/constants";
-import { MyViewport } from "./viewport";
+import { ViewportWrapper } from "./ViewportWrapper";
+import { ApplicationWrapper } from "./ApplicationWrapper";
 
 export class Grid extends Graphics {
-    viewport: MyViewport;
-    app: Application;
+    private viewport!: ViewportWrapper;
+    private app!: ApplicationWrapper;
+    static #instance: Grid;
 
-    constructor(viewport: MyViewport) {
+    private constructor() {
         super();
         this.isRenderGroup = true;
         this.zIndex = -Infinity;
-        this.viewport = viewport;
-        this.app = viewport.app;
+    }
 
+    static async getInstance(): Promise<Grid> {
+        if (!this.#instance) {
+            this.#instance = new Grid();
+            await this.#instance.create();
+        }
+        return this.#instance;
+    }
+
+    private async create(): Promise<void> {
+        this.viewport = await ViewportWrapper.getInstance();
+        this.app = await ApplicationWrapper.getInstance();
         this.app.ticker.add(() => {
             this.drawGrid();
         });

@@ -1,17 +1,18 @@
 import { Viewport } from "pixi-viewport";
-import { Application } from "pixi.js";
+import { ApplicationWrapper } from "./ApplicationWrapper";
 
 const worldWidth: number = 10000;
 const worldHeight: number = 10000;
 
-export class MyViewport extends Viewport {
-    public app: Application;
+export class ViewportWrapper extends Viewport {
+    public app: ApplicationWrapper;
+    static #instance: ViewportWrapper;
     private edgeThreshold: number = 30; // Distance from edge to start panning (pixels)
     private panSpeed: number = 7; // Base panning speed (pixels per frame)
     private panDirection: { x: number; y: number } = { x: 0, y: 0 };
     private animationId: number | null = null;
 
-    constructor(app: Application) {
+    private constructor(app: ApplicationWrapper) {
         super({
             screenWidth: window.innerWidth,
             screenHeight: window.innerHeight,
@@ -36,6 +37,13 @@ export class MyViewport extends Viewport {
         this.handleResize();
         this.resetViewport();
         this.pinch().wheel().decelerate();
+    }
+
+    public static async getInstance(): Promise<ViewportWrapper> {
+        if (!this.#instance) {
+            this.#instance = new ViewportWrapper(await ApplicationWrapper.getInstance());
+        }
+        return this.#instance;
     }
 
     resetViewport(): void {

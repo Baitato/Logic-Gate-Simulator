@@ -1,9 +1,13 @@
-import { viewport, placeableState, wireState, unplacedWireState } from "../core/instances";
+import { ViewportWrapper } from "../core/ViewportWrapper";
 import type { ConnectionPoint } from "../models/ConnectionPoint";
 import type { Placeable } from "../models/Placeable";
 import type { Wire } from "../models/Wire";
+import { PlaceableState } from "./PlaceableState";
+import { UnplacedWireState } from "./UnplacedWireState";
+import { WireState } from "./WireState";
 
 export class StateManager {
+    static #instance: StateManager;
     static activeConnectionPoint: ConnectionPoint | null = null;
     static wireIdCounter: number = 0;
     static placeableById: Map<number, Placeable> = new Map<number, Placeable>();
@@ -11,11 +15,32 @@ export class StateManager {
     static currentTick: number = 0;
 
     private static MAX_TICKS: number = 4000;
-    private static instance: StateManager | null = null;
 
-    private constructor() {
+    public viewport: ViewportWrapper;
+    private placeableState: PlaceableState;
+    private wireState: WireState;
+    private unplacedWireState: UnplacedWireState;
+
+    private constructor(viewport: ViewportWrapper, placeableState: PlaceableState, wireState: WireState, unplacedWireState: UnplacedWireState) {
+        this.viewport = viewport;
+        this.placeableState = placeableState;
+        this.wireState = wireState;
+        this.unplacedWireState = unplacedWireState;
+
         window.addEventListener("keydown", (event: KeyboardEvent) => this.onKeyPress(event))
-        viewport.on("pointerdown", () => this.onViewportPress(), this);
+        this.viewport.on("pointerdown", () => this.onViewportPress(), this);
+    }
+
+    public static async getInstance(): Promise<StateManager> {
+        if (!this.#instance) {
+            const viewport = await ViewportWrapper.getInstance();
+            const placeableState = await PlaceableState.getInstance();
+            const wireState = WireState.getInstance();
+            const unplacedWireState = UnplacedWireState.getInstance();
+            this.#instance = new StateManager(viewport, placeableState, wireState, unplacedWireState);
+        }
+
+        return this.#instance;
     }
 
     static generatePlaceableId(): number {
@@ -28,11 +53,14 @@ export class StateManager {
         return cur;
     }
 
-    static initialize(): StateManager {
-        if (!StateManager.instance) {
-            StateManager.instance = new StateManager();
+    static generateWireId(): number {
+        let cur = Math.floor(Math.random() * 0x100000000);
+
+        while (StateManager.wireById.has(cur)) {
+            cur = Math.floor(Math.random() * 0x100000000);
         }
-        return StateManager.instance;
+
+        return cur;
     }
 
     static nextTick(): number {
@@ -42,23 +70,16 @@ export class StateManager {
         return StateManager.currentTick;
     }
 
-    static getInstance(): StateManager {
-        if (!StateManager.instance) {
-            throw new Error('StateManager not initialized. Call StateManager.initialize() first.');
-        }
-        return StateManager.instance;
-    }
-
     private onViewportPress() {
-        if (placeableState.selected || wireState.selected) {
+        if (this.placeableState.selected || this.wireState.selected) {
             this.unselect();
         }
     }
 
     public unselect() {
-        placeableState.unselect();
-        wireState.unselect();
-        unplacedWireState.unselect();
+        this.placeableState.unselect();
+        this.wireState.unselect();
+        this.unplacedWireState.unselect();
     }
 
     onKeyPress(event: KeyboardEvent): void {
@@ -68,10 +89,8 @@ export class StateManager {
     }
 
     deleteCurrentSelection(): void {
-        placeableState.delete();
-        wireState.delete();
-        unplacedWireState.delete();
+        this.placeableState.delete();
+        this.wireState.delete();
+        this.unplacedWireState.delete();
     }
 }
-
-export const stateManager = StateManager;

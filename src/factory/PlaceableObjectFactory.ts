@@ -10,15 +10,19 @@ export class PlaceableObjectFactory {
     private constructor() { }
 
     public static async create(x: number, y: number, type: PlaceableType): Promise<Placeable> {
+        let placeable: Placeable;
         if (type === PlaceableType.SWITCH) {
-            return await this.createSwitch(x, y);
+            placeable = await this.createSwitch(x, y);
         } else if (type === PlaceableType.BULB) {
-            return await this.createBulb(x, y);
+            placeable = await this.createBulb(x, y);
         } else if (type === PlaceableType.CLOCK) {
-            return await this.createClock(x, y);
+            placeable = await this.createClock(x, y);
         } else {
-            return await this.createGate(x, y, type);
+            placeable = await this.createGate(x, y, type);
         }
+
+        placeable.savePlaceable();
+        return placeable;
     }
 
     public static async createGate(x: number, y: number, type: PlaceableType, rotation: number = 0): Promise<Gate> {

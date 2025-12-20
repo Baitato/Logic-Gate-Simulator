@@ -1,9 +1,8 @@
-import { ApplicationWrapper } from './core/app';
-import { MyViewport } from './core/viewport';
-import { Grid } from './core/grid';
-import { Toolbox } from './tools/toolbox';
-import { simulationService } from './core/simulator/SimulationService';
-import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance, setPlaceableStateInstance, setWireStateInstance, setUnplacedWireStateInstance, setTickRateMenuInstance, setRotationHandlerInstance, setSelectionServiceInstance, setCopyPasteServiceInstance, setImportServiceInstance } from './core/instances';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ApplicationWrapper } from './core/ApplicationWrapper';
+import { ViewportWrapper } from './core/ViewportWrapper';
+import { Grid } from './core/Grid';
+import { Toolbox } from './tools/Toolbox';
 import { StateManager } from './state/StateManager';
 import { PlaceableState } from './state/PlaceableState';
 import { WireState } from './state/WireState';
@@ -13,58 +12,60 @@ import { RotationHandler } from './models/logic-gate/RotationHandler';
 import { SelectionService } from './services/SelectionService';
 import { CopyPasteService } from './services/CopyPasteService';
 import { ImportService } from './services/ImportService';
+import { SimulationService } from './core/simulator/SimulationService';
+import { FederatedPointerEvent } from 'pixi.js';
 
 async function initializeApp() {
     try {
         console.log('Initializing Logic Gate Simulator...');
 
-        const rotationHandler = await new RotationHandler().setupRotationHandler();
-        setRotationHandlerInstance(rotationHandler);
+        const rotationHandler = await RotationHandler.getInstance();
+        console.log('Rotation Handler initialized');
 
-        const tickRateMenu = await ClockTickRateMenu.create();
-        setTickRateMenuInstance(tickRateMenu);
+        const tickRateMenu = await ClockTickRateMenu.getInstance();
         console.log('Tick Rate Menu created');
 
-        // Initialize state instances first (before any models that need them)
-        setPlaceableStateInstance(new PlaceableState(simulationService, rotationHandler, tickRateMenu));
-        setWireStateInstance(new WireState());
-        setUnplacedWireStateInstance(new UnplacedWireState());
+        const simulationService = SimulationService.getInstance();
+        console.log('Simulation Service initialized');
+
+        const placeableState = await PlaceableState.getInstance();
+        console.log('Placeable State class loaded');
+
+        const wireState = await WireState.getInstance();
+        console.log('Wire State class loaded');
+
+        const unplacedWireState = await UnplacedWireState.getInstance();
+        console.log('Unplaced Wire State class loaded');
+
         console.log('State instances created');
 
         // Initialize app first
-        const app = await ApplicationWrapper.create();
-        setAppInstance(app);
+        const app = await ApplicationWrapper.getInstance();
         console.log('App created');
 
         // Initialize viewport
-        const viewport = new MyViewport(app);
-        setViewportInstance(viewport);
+        const viewport = await ViewportWrapper.getInstance();
         console.log('Viewport created');
 
         // Initialize grid
-        const grid = new Grid(viewport);
-        setGridInstance(grid);
+        const grid = await Grid.getInstance();
         console.log('Grid created');
 
-        const importService = new ImportService();
-        setImportServiceInstance(importService);
+        const importService = await ImportService.getInstance();
         console.log('Import service initialized');
 
         // Initialize toolbox
-        const toolbox = await Toolbox.create();
-        setToolboxInstance(toolbox);
+        const toolbox = await Toolbox.getInstance();
         console.log('Toolbox created');
 
         // Initialize state manager
-        StateManager.initialize();
+        const stateManager = StateManager.getInstance();
         console.log('State manager initialized');
 
-        const selectionService = new SelectionService(viewport);
-        setSelectionServiceInstance(selectionService);
+        const selectionService = await SelectionService.getInstance();
         console.log('Copy service initialized');
 
-        const copyPasteService = new CopyPasteService(importService, selectionService);
-        setCopyPasteServiceInstance(copyPasteService);
+        const copyPasteService = await CopyPasteService.getInstance();
         console.log('Selection service initialized');
 
         window.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -73,12 +74,26 @@ async function initializeApp() {
             }
         });
 
-        window.addEventListener('keydown', (event: KeyboardEvent) => {
+        window.addEventListener('keydown', async (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === 'v') {
                 const interaction = app.renderer.events;
                 const pos = interaction.pointer.global;
 
-                copyPasteService.paste(pos);
+                await copyPasteService.initializeDisplayPastePreview(pos);
+                const wires = importService.getWires();
+                const placeables = importService.getPlaceables();
+
+                const onMove = async (event: FederatedPointerEvent) => {
+                    const movePos = interaction.pointer.global;
+                    await copyPasteService.displayPastePreview(movePos, wires, placeables);
+                };
+
+                viewport.on('pointermove', onMove);
+
+                viewport.once('pointerdown', async () => {
+                    await copyPasteService.paste(pos)
+                    viewport.off('pointermove', onMove);
+                });
             }
         });
 

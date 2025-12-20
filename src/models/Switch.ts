@@ -5,8 +5,6 @@ import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
 import { loadSprite } from "../utils/assetLoader";
 import { PlaceableType } from "../enums/PlaceableType";
-import { simulationService } from "../core/simulator/SimulationService";
-import { placeableState } from "../core/instances";
 import { AssetName } from "../enums/AssetName";
 
 const dimensions: Dimension = { x: 50, y: 50 };
@@ -23,8 +21,6 @@ export class Switch extends Placeable {
     constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false) {
         super(x, y, rotation);
         this.isOn = isOn;
-
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -36,13 +32,14 @@ export class Switch extends Placeable {
     }
 
     public override async setUp(): Promise<Switch> {
-        super.setUp(Switch.assetName);
+        await super.setUp(Switch.assetName);
 
         this.onSprite = await loadSprite(Switch.onAssetName, dimensions);
         this.addChild(this.onSprite);
 
         this.render();
         this.addClickableArea();
+
         return this;
     }
 
@@ -67,7 +64,7 @@ export class Switch extends Placeable {
 
         this.render();
 
-        simulationService.flipSwitch(this.placeableId);
+        this.simulationService.flipSwitch(this.placeableId);
     }
 
     private render() {

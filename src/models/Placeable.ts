@@ -4,12 +4,16 @@ import { ConnectionPoint } from './ConnectionPoint';
 import { Coordinate } from "../types/ICoordinate";
 import { StateManager } from "../state/StateManager";
 import { PlaceableType } from "../enums/PlaceableType";
-import { destroy } from "../services/viewport/positionService";
-import { placeableState } from "../core/instances";
 import { loadSprite } from "../utils/assetLoader";
 import { placeableDimensions } from "../utils/constants";
+import { PlaceableState } from "../state/PlaceableState";
+import { SimulationService } from "../core/simulator/SimulationService";
+import PositionService from "../services/viewport/PositionService";
 
 export abstract class Placeable extends Container {
+    protected placeableState!: PlaceableState;
+    protected simulationService!: SimulationService;
+
     abstract type: PlaceableType;
     abstract outputPoints: ConnectionPoint[];
     abstract inputPoints: ConnectionPoint[];
@@ -27,16 +31,24 @@ export abstract class Placeable extends Container {
         this.x = x;
         this.y = y;
         this.rotation = rotation
-        this.setPlaceableId();
         this.eventMode = "static";
     }
 
     public async setUp(assetName: string): Promise<Placeable> {
+        this.placeableState = await PlaceableState.getInstance();
+        this.simulationService = SimulationService.getInstance();
+
         this.offSprite = await loadSprite(assetName, placeableDimensions);
         this.addChild(this.offSprite);
         this.addConnectionPoints();
 
         return this;
+    }
+
+    public savePlaceable(): void {
+        this.on("pointerup", (event) => this.placeableState.onSelect(event, this));
+        this.setPlaceableId();
+        PositionService.save(this.x, this.y, this);
     }
 
     private setPlaceableId(): void {
@@ -45,14 +57,14 @@ export abstract class Placeable extends Container {
     }
 
     public destroy(options?: DestroyOptions): void {
-        if (placeableState.selected === this) {
-            placeableState.selected = null;
+        if (this.placeableState.selected === this) {
+            this.placeableState.selected = null;
         }
 
         this.inputPoints.forEach((point) => point.destroy());
         this.outputPoints.forEach((point) => point.destroy());
 
-        destroy(this.x, this.y);
+        PositionService.destroy(this.x, this.y);
         StateManager.placeableById.delete(this.placeableId);
         super.destroy(options);
     }

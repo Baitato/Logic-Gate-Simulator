@@ -2,12 +2,11 @@ import { Sprite } from "pixi.js";
 import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
 import { ConnectionPoint } from "./ConnectionPoint";
-import { placeableState } from "../core/instances";
 import { Coordinate } from "../types/ICoordinate";
 import { loadSprite } from "../utils/assetLoader";
-import { Value } from "../core/simulator/FunctionalGate";
 import { Dimension } from "../types/IDimension";
 import { AssetName } from "../enums/AssetName";
+import { Value } from "../types/IValue";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
@@ -21,8 +20,6 @@ export class Bulb extends Placeable {
 
     constructor(x: number, y: number, rotation: number = 0) {
         super(x, y, rotation);
-
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -34,7 +31,7 @@ export class Bulb extends Placeable {
     }
 
     public override async setUp(): Promise<Bulb> {
-        super.setUp(Bulb.assetName);
+        await super.setUp(Bulb.assetName);
 
         this.onSprite = await loadSprite(Bulb.onAssetName, dimensions);
         this.addChild(this.onSprite);

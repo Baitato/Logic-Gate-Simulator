@@ -4,13 +4,14 @@ import { placeableDimensions } from "../../utils/constants";
 import { Placeable } from "../Placeable";
 
 export class RotationHandler extends Sprite {
+    static #instance: RotationHandler;
     startPointerAngle: number = 0;
     startRotation: number = 0;
     private pointerMoveListener?: (event: FederatedPointerEvent) => void;
     private pointerUpListener?: () => void;
     private pointerDownListener?: (event: FederatedPointerEvent) => void;
 
-    constructor() {
+    private constructor() {
         super();
         this.anchor.set(0.5, 0.5);
         this.setupRotationHandler();
@@ -28,6 +29,14 @@ export class RotationHandler extends Sprite {
         this.visible = false;
 
         return this;
+    }
+
+    public static async getInstance(): Promise<RotationHandler> {
+        if (!this.#instance) {
+            this.#instance = new RotationHandler();
+            await this.#instance.setupRotationHandler();
+        }
+        return this.#instance;
     }
 
     addRotationHandler(placeable: Placeable): void {

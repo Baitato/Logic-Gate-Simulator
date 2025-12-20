@@ -1,12 +1,12 @@
 import { Graphics, Point, FederatedPointerEvent } from 'pixi.js';
-import { viewport } from "../core/instances";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { Coordinate } from "../types/ICoordinate";
 import { Wire } from "./Wire";
 import { StateManager } from "../state/StateManager";
 import { WireUnplaced } from './WireUnplaced';
-import { unplacedWireState } from '../core/instances';
 import type { Placeable } from './Placeable';
+import { UnplacedWireState } from '../state/UnplacedWireState';
+import { ViewportWrapper } from '../core/ViewportWrapper';
 
 export class ConnectionPoint extends Graphics {
     type: ConnectionPointType;
@@ -34,7 +34,7 @@ export class ConnectionPoint extends Graphics {
         }
     }
 
-    public getViewportPosition() {
+    public getViewportPosition(viewport: ViewportWrapper): Point {
         return viewport.toLocal(this.getGlobalPosition(new Point(this.x, this.y)));
     }
 
@@ -67,26 +67,28 @@ export class ConnectionPoint extends Graphics {
         this.fill();
     }
 
-    private onPointerDown(event: FederatedPointerEvent): void {
+    private async onPointerDown(event: FederatedPointerEvent): Promise<void> {
         event.stopPropagation();
 
+        const viewport: ViewportWrapper = await ViewportWrapper.getInstance();
+
         if (this.wires.size > 0 && this.type == ConnectionPointType.INPUT) {
-            this.resetStates();
+            await this.resetStates();
             return;
         }
 
-        if (StateManager.activeConnectionPoint === null || unplacedWireState.selected === null) {
+        if (StateManager.activeConnectionPoint === null || UnplacedWireState.getInstance().selected === null) {
             const wire = new WireUnplaced(this);
             viewport.addChild(wire);
             StateManager.activeConnectionPoint = this;
         } else if (StateManager.activeConnectionPoint !== this && StateManager.activeConnectionPoint.type !== this.type) {
-            const wire = new Wire(StateManager.activeConnectionPoint, this);
+            const wire = new Wire(StateManager.activeConnectionPoint, this, viewport).saveWire();
             this.wires.add(wire);
             StateManager.activeConnectionPoint.wires.add(wire);
             viewport.addChild(wire);
-            this.resetStates();
+            await this.resetStates();
         } else {
-            this.resetStates();
+            await this.resetStates();
         }
     }
 
@@ -94,11 +96,14 @@ export class ConnectionPoint extends Graphics {
         this.wires.add(wire);
     }
 
-    private resetStates() {
+    private async resetStates() {
         StateManager.activeConnectionPoint = null;
-        if (unplacedWireState.selected)
-            viewport.removeChild(unplacedWireState.selected);
-        unplacedWireState.selected?.destroy();
-        unplacedWireState.selected = null;
+        const selected = UnplacedWireState.getInstance().selected;
+
+        if (selected) {
+            selected.destroy();
+            (await ViewportWrapper.getInstance()).removeChild(selected);
+            UnplacedWireState.getInstance().selected = null;
+        }
     }
 }

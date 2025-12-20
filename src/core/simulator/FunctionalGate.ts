@@ -1,8 +1,7 @@
 import { PlaceableType } from "../../enums/PlaceableType"
 import { Bulb } from "../../models/Bulb";
 import { StateManager } from "../../state/StateManager";
-
-export type Value = number | undefined;
+import { Value } from "../../types/IValue";
 
 export class FunctionalGate {
     type: PlaceableType;

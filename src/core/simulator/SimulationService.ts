@@ -1,20 +1,29 @@
 import { PlaceableType } from '../../enums/PlaceableType';
 import { StateManager } from '../../state/StateManager';
 import { getCondensedGraph } from './condensedGraph';
-import { FunctionalGate, type Value } from './FunctionalGate';
+import { FunctionalGate } from './FunctionalGate';
 import { Clock } from '../../models/Clock';
 import { Placeable } from '../../models/Placeable';
 import { Switch } from '../../models/Switch';
 import { Wire } from '../../models/Wire';
+import { Value } from '../../types/IValue';
 
 export class SimulationService {
+    static #instance: SimulationService;
     public wires: Map<number, Wire> = new Map();
     public gates: Map<number, FunctionalGate> = new Map();
     public adjacencyList: Map<number, Set<number>> = new Map();
     public netList: Map<number, Value> = new Map();
     static cnt = 0;
 
-    constructor() { }
+    private constructor() { }
+
+    static getInstance(): SimulationService {
+        if (!this.#instance) {
+            this.#instance = new SimulationService();
+        }
+        return this.#instance;
+    }
 
     public nextIteration(): void {
         const condensedSccGraph = getCondensedGraph(this.adjacencyList);
@@ -183,6 +192,4 @@ export class SimulationService {
         }
     }
 }
-
-export const simulationService = new SimulationService();
 

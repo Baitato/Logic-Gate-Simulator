@@ -1,31 +1,38 @@
 import { Container, Graphics } from "pixi.js";
 import { PlaceableTool } from "./PlaceableTool";
 import { ScrollBox } from "@pixi/ui";
-import { place } from "../services/viewport/placementService";
 import { AssetName } from "../enums/AssetName";
 import { PlaceableType } from "../enums/PlaceableType";
 import { BaseTool } from "./BaseTool";
 import { ImportTool } from "./ImportTool";
 import { ExportTool } from "./ExportTool";
 import { MiscTool } from "./MiscTool";
-import { importService } from "../core/instances";
+import { ImportService } from '../services/ImportService';
+import { PlacementService } from '../services/viewport/PlacementService';
 
 const toolboxWidth = 145;
 const elementpadding = 20;
 const scrollBarPadding = { x: 20, y: 20 };
 
 export class Toolbox extends Container {
+    static #instance: Toolbox;
+    private importService: ImportService;
+    private placementService: PlacementService;
 
-    private constructor() {
+    private constructor(importService: ImportService, placementService: PlacementService) {
         super();
+        this.importService = importService;
+        this.placementService = placementService;
         this.isRenderGroup = true;
         this.zIndex = 1000;
     }
 
-    static async create(): Promise<Toolbox> {
-        const toolbox = new Toolbox();
-        await toolbox.initializeToolbox();
-        return toolbox;
+    public static async getInstance(): Promise<Toolbox> {
+        if (!this.#instance) {
+            this.#instance = new Toolbox(await ImportService.getInstance(), await PlacementService.getInstance());
+            await this.#instance.initializeToolbox();
+        }
+        return this.#instance;
     }
 
     private async initializeToolbox(): Promise<void> {
@@ -43,7 +50,7 @@ export class Toolbox extends Container {
             tool.position.set(col * (itemSize + gap), row * (itemSize + gap));
 
             if (tool instanceof PlaceableTool)
-                tool.on("pointerdown", (event) => place(event, tool.type));
+                tool.on("pointerdown", (event) => this.placementService.place(event, tool.type));
 
             if (tool instanceof MiscTool)
                 tool.on("pointerup", () => tool.onClick());
@@ -96,7 +103,7 @@ export class Toolbox extends Container {
 
     private getMiscToolIcons(): BaseTool[] {
         const miscToolIcons: BaseTool[] = [
-            new ImportTool(AssetName.IMPORT, importService),
+            new ImportTool(AssetName.IMPORT, this.importService),
             new ExportTool(AssetName.EXPORT),
         ];
 

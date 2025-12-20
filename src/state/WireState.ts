@@ -2,7 +2,15 @@ import { FederatedPointerEvent } from "pixi.js";
 import type { Wire } from "../models/Wire";
 
 export class WireState {
+    static #instance: WireState;
     selected: Wire | null = null;
+
+    public static getInstance(): WireState {
+        if(!this.#instance) {
+            this.#instance = new WireState();
+        }
+        return this.#instance;
+    }
 
     public onSelect(event: FederatedPointerEvent, wire: Wire) {
         event.stopPropagation();

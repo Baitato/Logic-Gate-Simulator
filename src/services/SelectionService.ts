@@ -1,31 +1,49 @@
 import { FederatedPointerEvent, Graphics, Rectangle } from "pixi.js";
-import { MyViewport } from "../core/viewport";
+import { ViewportWrapper } from "../core/ViewportWrapper";
 import { Dimension } from "../types/IDimension";
 import { getRoundedPoint } from "../utils/util";
 
 export class SelectionService {
-    private viewport: MyViewport;
+    static #instance: SelectionService;
+
+    private viewport: ViewportWrapper;
     private startPoint: Dimension | null = null;
     private endPoint: Dimension | null = null;
     private selectionRect: Graphics | null = null;
     private actualSelection: Rectangle | null = null;
+    private isSelecting: boolean = false;
 
-    private onPointerDown: (event: FederatedPointerEvent) => void;
     private onPointerMove: ((event: FederatedPointerEvent) => void) | null = null;
-    private onPointerUp: ((event: FederatedPointerEvent) => void) | null = null;
+    private onGlobalPointerUp: ((event: PointerEvent) => void) | null = null;
 
-    constructor(viewport: MyViewport) {
+    private constructor(viewport: ViewportWrapper) {
         this.viewport = viewport;
 
-        // Ensure viewport can receive pointer events
-        this.viewport.eventMode = "static";
+        this.viewport.on("pointerdown", (event) => this.startSelection(event));
+    }
 
-        this.onPointerDown = (event) => this.startSelection(event);
-        this.viewport.on("pointerdown", this.onPointerDown);
+    public static async getInstance(): Promise<SelectionService> {
+        if (!this.#instance) {
+            const viewport = await ViewportWrapper.getInstance();
+            this.#instance = new SelectionService(viewport);
+        }
+        return this.#instance;
     }
 
     startSelection(event: FederatedPointerEvent): void {
+        // Ignore if already selecting
+        if (this.isSelecting) return;
+
+        this.isSelecting = true;
         this.actualSelection = null;
+
+        // Clear previous selection rectangle if it exists
+        if (this.selectionRect) {
+            this.selectionRect.clear();
+            this.selectionRect.destroy();
+            this.selectionRect = null;
+        }
+
         this.startPoint = this.viewport.toLocal(event.global);
 
         // Create selection rectangle once
@@ -33,9 +51,11 @@ export class SelectionService {
         this.viewport.addChild(this.selectionRect);
 
         this.onPointerMove = (event) => this.updateSelection(event);
-        this.onPointerUp = (event) => this.endSelection(event);
         this.viewport.on("pointermove", this.onPointerMove);
-        this.viewport.on("pointerup", this.onPointerUp);
+
+        // Use global pointerup to ensure endSelection is always called
+        this.onGlobalPointerUp = (event) => this.endSelection(event);
+        window.addEventListener("pointerup", this.onGlobalPointerUp);
     }
 
     updateSelection(event: FederatedPointerEvent): void {
@@ -54,17 +74,32 @@ export class SelectionService {
             .fill({ color: 0x0099ff, alpha: 0.2 });
     }
 
-    endSelection(event: FederatedPointerEvent): void {
-        this.viewport.off("pointermove", this.onPointerMove!);
-        this.viewport.off("pointerup", this.onPointerUp!);
+    endSelection(event: PointerEvent): void {
+        // Remove event listeners safely
+        if (this.onPointerMove) {
+            this.viewport.off("pointermove", this.onPointerMove);
+            this.onPointerMove = null;
+        }
+        if (this.onGlobalPointerUp) {
+            window.removeEventListener("pointerup", this.onGlobalPointerUp);
+            this.onGlobalPointerUp = null;
+        }
 
-        this.endPoint = this.viewport.toLocal(event.global);
+        this.isSelecting = false;
+
+        // Safety check - ensure startPoint exists
+        if (!this.startPoint) {
+            return;
+        }
+
+        // Convert global screen coordinates to viewport local coordinates
+        const globalPoint = { x: event.clientX, y: event.clientY };
+        this.endPoint = this.viewport.toLocal(globalPoint);
 
         // Round to nearest 50 units
         const roundedStartX = getRoundedPoint(this.startPoint!.x)
         const roundedStartY = getRoundedPoint(this.startPoint!.y)
         const roundedEndX = getRoundedPoint(this.endPoint!.x)
-        
         const roundedEndY = getRoundedPoint(this.endPoint!.y)
         // Create rounded rectangle
         this.actualSelection = new Rectangle(
@@ -74,9 +109,18 @@ export class SelectionService {
             Math.abs(roundedEndY - roundedStartY)
         );
 
+        // Clear the drag selection rect and redraw with the rounded actualSelection
         this.selectionRect?.clear();
-        this.selectionRect?.destroy();
-        this.selectionRect = null;
+        if (this.actualSelection.width > 0 && this.actualSelection.height > 0) {
+            this.selectionRect?.rect(
+                this.actualSelection.x,
+                this.actualSelection.y,
+                this.actualSelection.width,
+                this.actualSelection.height
+            )
+                .stroke({ color: 0xFFFFFF, width: 2 })
+                .fill({ color: 0xFFFFFF, alpha: 0.2 });
+        }
     }
 
     getActualSelection(): Rectangle | null {

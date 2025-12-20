@@ -1,4 +1,3 @@
-import { placeableState } from "../core/instances";
 import type { FunctionalGate } from "../core/simulator/FunctionalGate";
 import { AssetName } from "../enums/AssetName";
 import { PlaceableType } from "../enums/PlaceableType";
@@ -16,8 +15,6 @@ export class Clock extends Placeable {
     constructor(x: number, y: number, tickRate: number = 1000, rotation: number = 0) {
         super(x, y, rotation);
         this.tickRate = tickRate;
-
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -29,7 +26,7 @@ export class Clock extends Placeable {
     }
 
     public override async setUp(): Promise<Clock> {
-        super.setUp(Clock.assetName);
+        await super.setUp(Clock.assetName);
         return this;
     }
 

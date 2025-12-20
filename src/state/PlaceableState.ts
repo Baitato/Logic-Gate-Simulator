@@ -1,21 +1,33 @@
 import { FederatedPointerEvent } from "pixi.js";
-import { Clock } from "../models/Clock";
+import type { Clock } from "../models/Clock";
 import { SimulationService } from "../core/simulator/SimulationService";
 import { ClockTickRateMenu } from "../tools/ClockTickRateMenu";
 import { PlaceableType } from "../enums/PlaceableType";
-import type { RotationHandler } from "../models/logic-gate/RotationHandler";
+import { RotationHandler } from "../models/logic-gate/RotationHandler";
 import type { Placeable } from "../models/Placeable";
 
 export class PlaceableState {
+    static #instance: PlaceableState;
     selected: Placeable | null = null;
     private simulationService: SimulationService;
     private rotationHandler: RotationHandler;
     private tickRateMenu: ClockTickRateMenu;
 
-    public constructor(simulationService: SimulationService, rotationHandler: RotationHandler, tickRateMenu: ClockTickRateMenu) {
+    private constructor(simulationService: SimulationService, rotationHandler: RotationHandler, tickRateMenu: ClockTickRateMenu) {
         this.simulationService = simulationService;
         this.rotationHandler = rotationHandler;
         this.tickRateMenu = tickRateMenu;
+    }
+
+    public static async getInstance(): Promise<PlaceableState> {
+        if (!this.#instance) {
+            const simulationService = await SimulationService.getInstance();
+            const rotationHandler = await RotationHandler.getInstance();
+            const tickRateMenu = await ClockTickRateMenu.getInstance();
+            this.#instance = new PlaceableState(simulationService, rotationHandler, tickRateMenu);
+        }
+
+        return this.#instance;
     }
 
     public onSelect(event: FederatedPointerEvent, placeable: Placeable) {
@@ -43,9 +55,9 @@ export class PlaceableState {
         this.rotationHandler.cleanUp();
 
         const placeable = this.selected;
-        if (placeable instanceof Clock) {
+        if (placeable.type === PlaceableType.CLOCK) {
             this.tickRateMenu.visible = false;
-            placeable.setTickRate(this.simulationService.gates, this.tickRateMenu.getValue());
+            (placeable as Clock).setTickRate(this.simulationService.gates, this.tickRateMenu.getValue());
         }
 
         this.selected.removeChild(this.rotationHandler);

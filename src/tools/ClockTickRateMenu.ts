@@ -2,6 +2,7 @@ import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Input, Slider } from "@pixi/ui";
 
 export class ClockTickRateMenu extends Container {
+    static #instance: ClockTickRateMenu;
     private slider!: Slider;
     private valueInput!: Input;
 
@@ -13,7 +14,14 @@ export class ClockTickRateMenu extends Container {
         this.position.set(window.innerWidth - 300, window.innerHeight - 175);
     }
 
-    static async create(): Promise<ClockTickRateMenu> {
+    public static async getInstance(): Promise<ClockTickRateMenu> {
+        if (!this.#instance) {
+            this.#instance = await ClockTickRateMenu.create();
+        }
+        return this.#instance;
+    }
+
+    private static async create(): Promise<ClockTickRateMenu> {
         const menu = new ClockTickRateMenu();
         await menu.initializeMenu();
         return menu;

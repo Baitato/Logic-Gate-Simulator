@@ -1,11 +1,20 @@
 import { Application } from "pixi.js";
 
 export class ApplicationWrapper extends Application {
+    static #instance: ApplicationWrapper;
+
     private constructor() {
         super();
     }
 
-    static async create(): Promise<ApplicationWrapper> {
+    static async getInstance(): Promise<ApplicationWrapper> {
+        if(!this.#instance) {
+            this.#instance = await ApplicationWrapper.create();
+        }
+        return this.#instance;
+    }
+
+    private static async create(): Promise<ApplicationWrapper> {
         const app = new ApplicationWrapper();
 
         await app.init({

@@ -1,9 +1,11 @@
 import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
-import { viewport, unplacedWireState } from "../core/instances";
 import { StateManager } from "../state/StateManager";
+import { UnplacedWireState } from "../state/UnplacedWireState";
+import { ViewportWrapper } from "../core/ViewportWrapper";
 
 export class WireUnplaced extends Graphics {
+    private viewport!: ViewportWrapper;
     endPoint: ConnectionPoint | null = null;
     startPoint: ConnectionPoint;
 
@@ -15,19 +17,23 @@ export class WireUnplaced extends Graphics {
         this.zIndex = -Infinity;
         this.startPoint = sourcePoint;
         this.eventMode = "none";
-        const sourcePos: Point = sourcePoint.getViewportPosition();
-        this.position.set(sourcePos.x, sourcePos.y);
-        unplacedWireState.selected = this;
+        UnplacedWireState.getInstance().selected = this;
+        this.create();
+    }
 
-        viewport.on("pointermove", this.handlePointerMove, this);
+    private async create(): Promise<void> {
+        this.viewport = await ViewportWrapper.getInstance();
+        const sourcePos: Point = this.startPoint.getViewportPosition(this.viewport);
+        this.position.set(sourcePos.x, sourcePos.y);
+        this.viewport.on("pointermove", this.handlePointerMove, this);
     }
 
     private followPointer(event: FederatedPointerEvent): void {
         this.clear();
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        viewport.once("pointerdown", this.handlePointerDown, this);
+        this.viewport.off("pointerdown", this.handlePointerDown, this);
+        this.viewport.once("pointerdown", this.handlePointerDown, this);
 
-        const globalPos: Point = viewport.toWorld(event.global);
+        const globalPos: Point = this.viewport.toWorld(event.global);
         const localPos: Point = new Point(
             globalPos.x - this.position.x,
             globalPos.y - this.position.y
@@ -52,9 +58,9 @@ export class WireUnplaced extends Graphics {
     }
 
     private defaultStates() {
-        viewport.off("pointermove", this.handlePointerMove, this);
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        unplacedWireState.selected = null;
+        this.viewport.off("pointermove", this.handlePointerMove, this);
+        UnplacedWireState.getInstance().selected = null;
+        this.viewport.off("pointerdown", this.handlePointerDown, this);
         StateManager.activeConnectionPoint = null;
     }
 }

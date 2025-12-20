@@ -2,7 +2,6 @@ import { Coordinate } from "../../types/ICoordinate";
 import { ConnectionPoint } from "../ConnectionPoint";
 import { Placeable } from "../Placeable";
 import { PlaceableType } from '../../enums/PlaceableType';
-import { placeableState } from "../../core/instances";
 
 export abstract class Gate extends Placeable {
     outputPoints: ConnectionPoint[] = [];
@@ -16,7 +15,6 @@ export abstract class Gate extends Placeable {
         super(x, y, rotation);
 
         this.type = type;
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
     }
 
     public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {
