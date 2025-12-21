@@ -10,11 +10,10 @@ export class Clock extends Placeable {
     static assetName = AssetName.CLOCK;
     inputPoints: ConnectionPoint[] = [];
     outputPoints: ConnectionPoint[] = [];
-    private tickRate: number;
+    private tickRate: number = 1000;
 
-    constructor(x: number, y: number, tickRate: number = 1000, rotation: number = 0) {
-        super(x, y, rotation);
-        this.tickRate = tickRate;
+    constructor(x: number, y: number) {
+        super(x, y);
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -25,17 +24,18 @@ export class Clock extends Placeable {
         return [{ x: 25, y: 0 }];
     }
 
-    public override async setUp(): Promise<Clock> {
-        await super.setUp(Clock.assetName);
+    public override setUp(): Clock {
+        super.setUp(Clock.assetName);
         return this;
     }
 
-    public setTickRate(nodes: Map<number, FunctionalGate>, tickRate: number): void {
+    public setTickRate(tickRate: number, nodes: Map<number, FunctionalGate> = new Map()): Clock {
         if (nodes.has(this.placeableId)) {
             nodes.get(this.placeableId)!.tickRate = tickRate;
         }
 
         this.tickRate = tickRate;
+        return this
     }
 
     public getTickRate(): number {

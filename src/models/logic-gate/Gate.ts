@@ -11,9 +11,8 @@ export abstract class Gate extends Placeable {
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
 
-    constructor(x: number, y: number, type: PlaceableType, rotation: number = 0) {
-        super(x, y, rotation);
-
+    constructor(x: number, y: number, type: PlaceableType) {
+        super(x, y);
         this.type = type;
     }
 

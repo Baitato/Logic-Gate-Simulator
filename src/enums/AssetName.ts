@@ -15,4 +15,5 @@ export enum AssetName {
     EXPORT = "export",
     IMPORT = "import",
     CLOCK = "clock",
+    ROTATION_WIDGET = "rotate",
 }

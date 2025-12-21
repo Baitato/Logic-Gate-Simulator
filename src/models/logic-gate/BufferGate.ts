@@ -7,11 +7,11 @@ export class BufferGate extends Gate {
     static type: PlaceableType = PlaceableType.BUFFER;
     static assetName: string = AssetName.BUFFER;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, BufferGate.type, rotation);
+    constructor(x: number, y: number) {
+        super(x, y, BufferGate.type);
     }
 
-    public override async setUp() {
+    public override setUp() {
         return super.setUp(BufferGate.assetName);
     }
 

@@ -4,7 +4,7 @@ import { ConnectionPoint } from './ConnectionPoint';
 import { Coordinate } from "../types/ICoordinate";
 import { StateManager } from "../state/StateManager";
 import { PlaceableType } from "../enums/PlaceableType";
-import { loadSprite } from "../utils/assetLoader";
+import { createSprite } from "../utils/assetLoader";
 import { placeableDimensions } from "../utils/constants";
 import { PlaceableState } from "../state/PlaceableState";
 import { SimulationService } from "../core/simulator/SimulationService";
@@ -26,19 +26,24 @@ export abstract class Placeable extends Container {
     placeableId!: number;
     connectionPointMap: Map<number, ConnectionPoint> = new Map<number, ConnectionPoint>();
 
-    constructor(x: number, y: number, rotation: number = 0) {
+    constructor(x: number, y: number) {
         super();
         this.x = x;
         this.y = y;
-        this.rotation = rotation
         this.eventMode = "static";
+
     }
 
-    public async setUp(assetName: string): Promise<Placeable> {
-        this.placeableState = await PlaceableState.getInstance();
+    public setRotation(rotation: number): this {
+        this.rotation = rotation;
+        return this;
+    }
+
+    public setUp(assetName: string): Placeable {
+        this.placeableState = PlaceableState.getInstance();
         this.simulationService = SimulationService.getInstance();
 
-        this.offSprite = await loadSprite(assetName, placeableDimensions);
+        this.offSprite = createSprite(assetName, placeableDimensions);
         this.addChild(this.offSprite);
         this.addConnectionPoints();
 
@@ -64,8 +69,12 @@ export abstract class Placeable extends Container {
         this.inputPoints.forEach((point) => point.destroy());
         this.outputPoints.forEach((point) => point.destroy());
 
-        PositionService.destroy(this.x, this.y);
-        StateManager.placeableById.delete(this.placeableId);
+        // Only clean up if the placeable was saved (has an ID)
+        if (this.placeableId !== undefined) {
+            PositionService.destroy(this.x, this.y);
+            StateManager.placeableById.delete(this.placeableId);
+        }
+
         super.destroy(options);
     }
 
@@ -77,9 +86,9 @@ export abstract class Placeable extends Container {
         return this.connectionPointMap.get(index)!;
     }
 
-    public renderWires() {
-        this.inputPoints.forEach((inputPoint) => { inputPoint.renderWire(); });
-        this.outputPoints.forEach((outputPoint) => { outputPoint.renderWire(); });
+    public renderWires(): void {
+        this.inputPoints.forEach((inputPoint) => inputPoint.renderWire());
+        this.outputPoints.forEach((outputPoint) => outputPoint.renderWire());
     }
 
     protected addConnectionPoints(): void {

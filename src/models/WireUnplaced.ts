@@ -21,8 +21,8 @@ export class WireUnplaced extends Graphics {
         this.create();
     }
 
-    private async create(): Promise<void> {
-        this.viewport = await ViewportWrapper.getInstance();
+    private create(): void {
+        this.viewport = ViewportWrapper.getInstance();
         const sourcePos: Point = this.startPoint.getViewportPosition(this.viewport);
         this.position.set(sourcePos.x, sourcePos.y);
         this.viewport.on("pointermove", this.handlePointerMove, this);

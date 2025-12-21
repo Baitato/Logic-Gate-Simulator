@@ -1,122 +1,103 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ApplicationWrapper } from './core/ApplicationWrapper';
 import { ViewportWrapper } from './core/ViewportWrapper';
 import { Grid } from './core/Grid';
 import { Toolbox } from './tools/Toolbox';
-import { StateManager } from './state/StateManager';
-import { PlaceableState } from './state/PlaceableState';
-import { WireState } from './state/WireState';
-import { UnplacedWireState } from './state/UnplacedWireState';
 import { ClockTickRateMenu } from './tools/ClockTickRateMenu';
-import { RotationHandler } from './models/logic-gate/RotationHandler';
-import { SelectionService } from './services/SelectionService';
 import { CopyPasteService } from './services/CopyPasteService';
 import { ImportService } from './services/ImportService';
 import { SimulationService } from './core/simulator/SimulationService';
-import { FederatedPointerEvent } from 'pixi.js';
+import { getAssetNames, preloadAllAssets } from './utils/assetLoader';
+import { PlaceableState } from './state/PlaceableState';
+import { RotationHandler } from './models/logic-gate/RotationHandler';
+import { PlacementService } from './services/viewport/PlacementService';
+import { SelectionService } from './services/SelectionService';
+import { StateManager } from './state/StateManager';
+
+const loadingScreen = document.getElementById('loading-screen')!;
+const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
+const progressText = document.getElementById('progress-text')!;
+const errorContainer = document.getElementById('error-container')!;
+const errorMessage = document.getElementById('error-message')!;
+
+function getPercent(completed: number, total: number): number {
+    return Math.floor((completed / total) * 100);
+}
+
+function updateProgress(percent: number, text: string) {
+    progressBar.style.width = `${percent}%`;
+    progressText.textContent = text;
+}
+
+function showError(error: Error) {
+    errorContainer.style.display = 'block';
+    errorMessage.textContent = error.message + '\n\n' + error.stack;
+    console.error('Initialization failed:', error);
+}
 
 async function initializeApp() {
     try {
-        console.log('Initializing Logic Gate Simulator...');
+        // Define initialization phases
+        const initSteps: Array<{ name: string; init: () => void | Promise<void> }> = [
+            { name: 'Application', init: () => ApplicationWrapper.init() },
+            { name: 'Viewport', init: () => ViewportWrapper.init() },
+            { name: 'Grid', init: () => Grid.init() },
+            { name: 'RotationHandler', init: () => RotationHandler.init() },
+            { name: 'ClockTickRateMenu', init: () => ClockTickRateMenu.init() },
+            { name: 'PlaceableState', init: () => PlaceableState.init() },
+            { name: 'ImportService', init: () => ImportService.init() },
+            { name: 'PlacementService', init: () => PlacementService.init() },
+            { name: 'SelectionService', init: () => SelectionService.init() },
+            { name: 'CopyPasteService', init: () => CopyPasteService.init() },
+            { name: 'StateManager', init: () => StateManager.init() },
+            { name: 'Toolbox', init: () => Toolbox.init() },
+        ];
 
-        const rotationHandler = await RotationHandler.getInstance();
-        console.log('Rotation Handler initialized');
+        const totalSteps = getAssetNames().length + initSteps.length;
+        let stepCount = 0;
 
-        const tickRateMenu = await ClockTickRateMenu.getInstance();
-        console.log('Tick Rate Menu created');
+        updateProgress(0, 'Loading assets...');
+        await preloadAllAssets((current, total, assetName) => {
+            updateProgress(getPercent(++stepCount, totalSteps), `Loading assets... ${current}/${total} (${assetName})`);
+        });
 
+        for (let i = 0; i < initSteps.length; i++) {
+            const step = initSteps[i];
+            updateProgress(getPercent(++stepCount, totalSteps), `Initializing ${step.name}...`);
+            await step.init();
+        }
+
+        updateProgress(100, 'Initialization complete!');
+
+        const app = ApplicationWrapper.getInstance();
+        const viewport = ViewportWrapper.getInstance();
+        const grid = Grid.getInstance();
+        const toolbox = Toolbox.getInstance();
+        const tickRateMenu = ClockTickRateMenu.getInstance();
         const simulationService = SimulationService.getInstance();
-        console.log('Simulation Service initialized');
 
-        const placeableState = await PlaceableState.getInstance();
-        console.log('Placeable State class loaded');
-
-        const wireState = await WireState.getInstance();
-        console.log('Wire State class loaded');
-
-        const unplacedWireState = await UnplacedWireState.getInstance();
-        console.log('Unplaced Wire State class loaded');
-
-        console.log('State instances created');
-
-        // Initialize app first
-        const app = await ApplicationWrapper.getInstance();
-        console.log('App created');
-
-        // Initialize viewport
-        const viewport = await ViewportWrapper.getInstance();
-        console.log('Viewport created');
-
-        // Initialize grid
-        const grid = await Grid.getInstance();
-        console.log('Grid created');
-
-        const importService = await ImportService.getInstance();
-        console.log('Import service initialized');
-
-        // Initialize toolbox
-        const toolbox = await Toolbox.getInstance();
-        console.log('Toolbox created');
-
-        // Initialize state manager
-        const stateManager = StateManager.getInstance();
-        console.log('State manager initialized');
-
-        const selectionService = await SelectionService.getInstance();
-        console.log('Copy service initialized');
-
-        const copyPasteService = await CopyPasteService.getInstance();
-        console.log('Selection service initialized');
-
-        window.addEventListener('keydown', (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'c') {
-                copyPasteService.copy();
-            }
-        });
-
-        window.addEventListener('keydown', async (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'v') {
-                const interaction = app.renderer.events;
-                const pos = interaction.pointer.global;
-
-                await copyPasteService.initializeDisplayPastePreview(pos);
-                const wires = importService.getWires();
-                const placeables = importService.getPlaceables();
-
-                const onMove = async (event: FederatedPointerEvent) => {
-                    const movePos = interaction.pointer.global;
-                    await copyPasteService.displayPastePreview(movePos, wires, placeables);
-                };
-
-                viewport.on('pointermove', onMove);
-
-                viewport.once('pointerdown', async () => {
-                    await copyPasteService.paste(pos)
-                    viewport.off('pointermove', onMove);
-                });
-            }
-        });
-
-        // Assemble the scene
         document.body.appendChild(app.canvas);
         app.stage.addChild(viewport);
         app.stage.addChild(toolbox);
         app.stage.addChild(tickRateMenu);
         viewport.addChild(grid);
 
+        let isIterating = false;
+
         app.ticker.add(() => {
-            simulationService.nextIteration();
+            if (isIterating) return;
+            isIterating = true;
+
+            simulationService.nextIteration()
+                .then(() => isIterating = false);
         });
 
-        console.log('Logic Gate Simulator initialized successfully');
         console.log('Renderer:', app.renderer.name);
+
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 150);
     } catch (error) {
-        console.error('Failed to initialize Logic Gate Simulator:', error);
-        document.body.innerHTML = `<div style="color: white; padding: 20px; font-family: monospace;">
-            <h2>Error initializing application</h2>
-            <p>${error instanceof Error ? error.message : String(error)}</p>
-            <p>Check console for details.</p>
-        </div>`;
+        showError(error instanceof Error ? error : new Error(String(error)));
     }
 }
 

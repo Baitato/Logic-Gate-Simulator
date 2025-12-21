@@ -7,11 +7,11 @@ export class NandGate extends Gate {
     static type: PlaceableType = PlaceableType.NAND;
     static assetName: string = AssetName.NAND;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, NandGate.type, rotation);
+    constructor(x: number, y: number) {
+        super(x, y, NandGate.type);
     }
 
-    public override async setUp() {
+    public override setUp() {
         return super.setUp(NandGate.assetName);
     }
 

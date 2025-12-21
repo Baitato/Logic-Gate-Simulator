@@ -7,6 +7,7 @@ export class Grid extends Graphics {
     private viewport!: ViewportWrapper;
     private app!: ApplicationWrapper;
     static #instance: Grid;
+    static #initialized = false;
 
     private constructor() {
         super();
@@ -14,23 +15,29 @@ export class Grid extends Graphics {
         this.zIndex = -Infinity;
     }
 
-    static async getInstance(): Promise<Grid> {
+    static async init(): Promise<void> {
+        if (this.#initialized) return;
+        this.#instance = new Grid();
+        this.#instance.setup();
+        this.#initialized = true;
+    }
+
+    static getInstance(): Grid {
         if (!this.#instance) {
-            this.#instance = new Grid();
-            await this.#instance.create();
+            throw new Error('Grid not initialized. Call init() first.');
         }
         return this.#instance;
     }
 
-    private async create(): Promise<void> {
-        this.viewport = await ViewportWrapper.getInstance();
-        this.app = await ApplicationWrapper.getInstance();
+    private setup(): void {
+        this.viewport = ViewportWrapper.getInstance();
+        this.app = ApplicationWrapper.getInstance();
         this.app.ticker.add(() => {
             this.drawGrid();
         });
     }
 
-    scaleToZero(scale: number): number {
+    private scaleToZero(scale: number): number {
         const minScale = 0.25;
         const maxScale = 1.0;
 
@@ -39,7 +46,7 @@ export class Grid extends Graphics {
         return (scale - minScale) / (maxScale - minScale);
     }
 
-    drawGrid(): void {
+    private drawGrid(): void {
         this.clear();
 
         const startX = Math.floor(this.viewport.left / cellSize) * cellSize;

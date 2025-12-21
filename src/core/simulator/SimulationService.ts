@@ -25,7 +25,7 @@ export class SimulationService {
         return this.#instance;
     }
 
-    public nextIteration(): void {
+    public async nextIteration(): Promise<void> {
         const condensedSccGraph = getCondensedGraph(this.adjacencyList);
 
         for (const scc of condensedSccGraph) {
@@ -82,11 +82,11 @@ export class SimulationService {
     }
 
     private setOutputValues(gate: FunctionalGate, newValue: Value): void {
-        gate.outputs.forEach(outputWireId => {
+        for (const outputWireId of gate.outputs) {
             this.netList.set(outputWireId, newValue);
             const outputWire = this.wires.get(outputWireId)!;
             outputWire.setValue(newValue);
-        });
+        }
         gate.value = newValue;
     }
 
@@ -130,6 +130,10 @@ export class SimulationService {
     }
 
     public deleteEdge(wire: Wire): void {
+        if (!this.wires.has(wire.wireId)) {
+            return; // Wire was never added to SimulationService
+        }
+
         this.wires.delete(wire.wireId);
 
         const source = wire.source;

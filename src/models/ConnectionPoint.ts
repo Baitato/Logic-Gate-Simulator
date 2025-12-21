@@ -30,23 +30,20 @@ export class ConnectionPoint extends Graphics {
 
     public renderWire() {
         if (this.wires.size > 0) {
-            this.wires.forEach((wires) => wires.render());
+            for (const wire of this.wires) {
+                wire.render();
+            }
         }
     }
 
     public getViewportPosition(viewport: ViewportWrapper): Point {
-        return viewport.toLocal(this.getGlobalPosition(new Point(this.x, this.y)));
+        const pointData = viewport.toLocal(this.getGlobalPosition(new Point(this.x, this.y)));
+        return new Point(pointData.x, pointData.y);
     }
 
     public destroy() {
         this.wires.forEach((wire) => wire.destroy());
         super.destroy();
-    }
-
-    public propagateValue(value: number) {
-        if (this.type === ConnectionPointType.INPUT) return;
-
-        this.wires.forEach((wire) => { wire.setValue(value); wire.render(); });
     }
 
     private render() {
@@ -67,13 +64,13 @@ export class ConnectionPoint extends Graphics {
         this.fill();
     }
 
-    private async onPointerDown(event: FederatedPointerEvent): Promise<void> {
+    private onPointerDown(event: FederatedPointerEvent): void {
         event.stopPropagation();
 
-        const viewport: ViewportWrapper = await ViewportWrapper.getInstance();
+        const viewport: ViewportWrapper = ViewportWrapper.getInstance();
 
         if (this.wires.size > 0 && this.type == ConnectionPointType.INPUT) {
-            await this.resetStates();
+            this.resetStates();
             return;
         }
 
@@ -86,9 +83,9 @@ export class ConnectionPoint extends Graphics {
             this.wires.add(wire);
             StateManager.activeConnectionPoint.wires.add(wire);
             viewport.addChild(wire);
-            await this.resetStates();
+            this.resetStates();
         } else {
-            await this.resetStates();
+            this.resetStates();
         }
     }
 
@@ -96,13 +93,13 @@ export class ConnectionPoint extends Graphics {
         this.wires.add(wire);
     }
 
-    private async resetStates() {
+    private resetStates() {
         StateManager.activeConnectionPoint = null;
         const selected = UnplacedWireState.getInstance().selected;
 
         if (selected) {
             selected.destroy();
-            (await ViewportWrapper.getInstance()).removeChild(selected);
+            ViewportWrapper.getInstance().removeChild(selected);
             UnplacedWireState.getInstance().selected = null;
         }
     }

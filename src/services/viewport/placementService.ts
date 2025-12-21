@@ -8,6 +8,7 @@ import PositionService from './PositionService';
 
 export class PlacementService {
     static #instance: PlacementService;
+    static #initialized = false;
 
     private viewport: ViewportWrapper;
 
@@ -19,9 +20,16 @@ export class PlacementService {
         this.viewport = viewport;
     }
 
-    public static async getInstance(): Promise<PlacementService> {
+    public static init(): void {
+        if (this.#initialized) return;
+        const viewport = ViewportWrapper.getInstance();
+        this.#instance = new PlacementService(viewport);
+        this.#initialized = true;
+    }
+
+    public static getInstance(): PlacementService {
         if (!this.#instance) {
-            this.#instance = new PlacementService(await ViewportWrapper.getInstance());
+            throw new Error('PlacementService not initialized. Call init() first.');
         }
         return this.#instance;
     }
@@ -34,8 +42,8 @@ export class PlacementService {
         this.initiatePlacement(worldPos.x, worldPos.y, placeableType);
     }
 
-    private async initiatePlacement(x: number, y: number, type: PlaceableType): Promise<void> {
-        const placeable: Placeable = await PlaceableObjectFactory.create(x, y, type);
+    private initiatePlacement(x: number, y: number, type: PlaceableType): void {
+        const placeable: Placeable = PlaceableObjectFactory.create(x, y, type);
         placeable.alpha = 0.6;
 
         this.curObject = placeable;

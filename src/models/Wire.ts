@@ -29,8 +29,6 @@ export class Wire extends Graphics {
         this.cursor = "pointer";
         this.eventMode = "static";
 
-        this.setWireId();
-
         if (sourcePoint.type === ConnectionPointType.INPUT) {
             [this.sourcePoint, this.targetPoint] = [this.targetPoint, this.sourcePoint];
         }
@@ -40,16 +38,13 @@ export class Wire extends Graphics {
         this.source = this.sourcePoint.parentPlaceable;
         this.target = this.targetPoint.parentPlaceable;
 
-        StateManager.wireById.set(this.wireId, this);
-
-        SimulationService.getInstance().addEdge(this);
-        this.render();
-
         this.on("pointerdown", (event) => WireState.getInstance().onSelect(event, this));
     }
 
     public saveWire(): Wire {
         this.setWireId();
+        SimulationService.getInstance().addEdge(this);
+        this.render();
         return this;
     }
 
@@ -57,9 +52,12 @@ export class Wire extends Graphics {
         this.targetPoint.wires.delete(this);
         this.sourcePoint.wires.delete(this);
 
-        SimulationService.getInstance().deleteEdge(this);
+        // Only remove from SimulationService if the wire was saved (has an ID)
+        if (this.wireId !== undefined) {
+            SimulationService.getInstance().deleteEdge(this);
+            StateManager.wireById.delete(this.wireId);
+        }
 
-        StateManager.wireById.delete(this.wireId);
         super.destroy();
     }
 
@@ -67,9 +65,9 @@ export class Wire extends Graphics {
         return `wire,${this.sourcePoint.parentPlaceable.placeableId},${this.sourcePoint.index},${this.targetPoint.parentPlaceable.placeableId},${this.targetPoint.index},${this.wireId}`;
     }
 
-    public setValue(value: Value): void {
+    public async setValue(value: Value): Promise<void> {
         this.value = value;
-        this.render();
+        await this.render();
     }
 
     public getValue(): Value {
@@ -98,7 +96,7 @@ export class Wire extends Graphics {
         this.drawLine(color);
     }
 
-    public async drawLine(color: number): Promise<void> {
+    public drawLine(color: number): void {
         const sourcePos = this.sourcePoint.getViewportPosition(this.viewport);
         const targetPos = this.targetPoint.getViewportPosition(this.viewport);
 

@@ -7,11 +7,11 @@ export class XorGate extends Gate {
     static type: PlaceableType = PlaceableType.XOR;
     static assetName: string = AssetName.XOR;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, XorGate.type, rotation);
+    constructor(x: number, y: number) {
+        super(x, y, XorGate.type);
     }
 
-    public override async setUp() {
+    public override setUp() {
         return super.setUp(XorGate.assetName);
     }
 

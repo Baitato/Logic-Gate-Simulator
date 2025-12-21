@@ -27,7 +27,8 @@ export class ImportTool extends MiscTool {
 
                     const lines = content.split('\n');
 
-                    this.importService.import(lines).then(() => PositionService.clearAll());
+                    this.importService.import(lines);
+                    PositionService.clearAll();
                 };
             }
         });

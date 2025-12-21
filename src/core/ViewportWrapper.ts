@@ -7,6 +7,7 @@ const worldHeight: number = 10000;
 export class ViewportWrapper extends Viewport {
     public app: ApplicationWrapper;
     static #instance: ViewportWrapper;
+    static #initialized = false;
     private edgeThreshold: number = 30; // Distance from edge to start panning (pixels)
     private panSpeed: number = 7; // Base panning speed (pixels per frame)
     private panDirection: { x: number; y: number } = { x: 0, y: 0 };
@@ -39,31 +40,38 @@ export class ViewportWrapper extends Viewport {
         this.pinch().wheel().decelerate();
     }
 
-    public static async getInstance(): Promise<ViewportWrapper> {
+    public static async init(): Promise<void> {
+        if (this.#initialized) return;
+        const app = ApplicationWrapper.getInstance();
+        this.#instance = new ViewportWrapper(app);
+        this.#initialized = true;
+    }
+
+    public static getInstance(): ViewportWrapper {
         if (!this.#instance) {
-            this.#instance = new ViewportWrapper(await ApplicationWrapper.getInstance());
+            throw new Error('ViewportWrapper not initialized. Call init() first.');
         }
         return this.#instance;
     }
 
-    resetViewport(): void {
+    private resetViewport(): void {
         this.moveCenter(0, 0);
         this.setZoom(1.25, true);
     }
 
-    handleResize(): void {
+    private handleResize(): void {
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
         this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
     }
 
-    onSpaceKeyDown(event: KeyboardEvent): void {
+    private onSpaceKeyDown(event: KeyboardEvent): void {
         if (event.code === "Space") {
             this.resetViewport();
         }
     }
 
-    handleMouseMove(event: MouseEvent): void {
+    private handleMouseMove(event: MouseEvent): void {
         // Stop panning if mouse is outside the window
         if (event.clientX < 0 || event.clientX > this.screenWidth || event.clientY < 0 || event.clientY > this.screenHeight) {
             this.stopPanning();

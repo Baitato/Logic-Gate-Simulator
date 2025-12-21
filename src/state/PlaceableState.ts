@@ -8,6 +8,7 @@ import type { Placeable } from "../models/Placeable";
 
 export class PlaceableState {
     static #instance: PlaceableState;
+    static #initialized = false;
     selected: Placeable | null = null;
     private simulationService: SimulationService;
     private rotationHandler: RotationHandler;
@@ -19,14 +20,19 @@ export class PlaceableState {
         this.tickRateMenu = tickRateMenu;
     }
 
-    public static async getInstance(): Promise<PlaceableState> {
-        if (!this.#instance) {
-            const simulationService = await SimulationService.getInstance();
-            const rotationHandler = await RotationHandler.getInstance();
-            const tickRateMenu = await ClockTickRateMenu.getInstance();
-            this.#instance = new PlaceableState(simulationService, rotationHandler, tickRateMenu);
-        }
+    public static async init(): Promise<void> {
+        if (this.#initialized) return;
+        const simulationService = SimulationService.getInstance();
+        const rotationHandler = RotationHandler.getInstance();
+        const tickRateMenu = ClockTickRateMenu.getInstance();
+        this.#instance = new PlaceableState(simulationService, rotationHandler, tickRateMenu);
+        this.#initialized = true;
+    }
 
+    public static getInstance(): PlaceableState {
+        if (!this.#instance) {
+            throw new Error('PlaceableState not initialized. Call init() first.');
+        }
         return this.#instance;
     }
 
@@ -52,12 +58,12 @@ export class PlaceableState {
         if (this.selected == null)
             return;
 
-        this.rotationHandler.cleanUp();
+        this.rotationHandler.removeRotationHandler();
 
         const placeable = this.selected;
         if (placeable.type === PlaceableType.CLOCK) {
             this.tickRateMenu.visible = false;
-            (placeable as Clock).setTickRate(this.simulationService.gates, this.tickRateMenu.getValue());
+            (placeable as Clock).setTickRate(this.tickRateMenu.getValue(), this.simulationService.gates);
         }
 
         this.selected.removeChild(this.rotationHandler);

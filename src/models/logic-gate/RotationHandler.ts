@@ -1,25 +1,26 @@
 import { FederatedPointerEvent, Sprite } from "pixi.js";
-import { loadTexture } from "../../utils/assetLoader";
+import { getPreloadedTexture } from "../../utils/assetLoader";
 import { placeableDimensions } from "../../utils/constants";
 import { Placeable } from "../Placeable";
+import { AssetName } from "../../enums/AssetName";
 
 export class RotationHandler extends Sprite {
     static #instance: RotationHandler;
-    startPointerAngle: number = 0;
-    startRotation: number = 0;
+    static #initialized = false;
+    private startPointerAngle: number = 0;
+    private startRotation: number = 0;
     private pointerMoveListener?: (event: FederatedPointerEvent) => void;
     private pointerUpListener?: () => void;
     private pointerDownListener?: (event: FederatedPointerEvent) => void;
 
     private constructor() {
         super();
-        this.anchor.set(0.5, 0.5);
-        this.setupRotationHandler();
     }
 
-    async setupRotationHandler(): Promise<RotationHandler> {
-        this.texture = await loadTexture("rotate");
+    setupRotationHandler(): RotationHandler {
+        this.texture = getPreloadedTexture(AssetName.ROTATION_WIDGET);
 
+        this.anchor.set(0.5, 0.5);
         this.y = -(placeableDimensions.y) / 2 - 10;
         this.width = 11;
         this.height = 11;
@@ -31,21 +32,27 @@ export class RotationHandler extends Sprite {
         return this;
     }
 
-    public static async getInstance(): Promise<RotationHandler> {
+    public static init(): void {
+        if (this.#initialized) return;
+        this.#instance = new RotationHandler();
+        this.#instance.setupRotationHandler();
+        this.#initialized = true;
+    }
+
+    public static getInstance(): RotationHandler {
         if (!this.#instance) {
-            this.#instance = new RotationHandler();
-            await this.#instance.setupRotationHandler();
+            throw new Error('RotationHandler not initialized. Call init() first.');
         }
         return this.#instance;
     }
 
-    addRotationHandler(placeable: Placeable): void {
+    public addRotationHandler(placeable: Placeable): void {
         this.visible = true;
         this.pointerDownListener = (event) => this.onPointerDown(event, placeable);
         this.on("pointerdown", this.pointerDownListener);
     }
 
-    setupRotationEvents(placeable: Placeable): void {
+    private setupRotationEvents(placeable: Placeable): void {
         this.pointerMoveListener = (event) => this.onPointerMove(event, placeable);
         this.on("globalpointermove", this.pointerMoveListener);
 
@@ -54,7 +61,20 @@ export class RotationHandler extends Sprite {
         this.on("pointerup", this.pointerUpListener);
     }
 
-    onPointerDown(event: FederatedPointerEvent, placeable: Placeable): void {
+    private cleanupRotationEvents(): void {
+        this.off("globalpointermove", this.pointerMoveListener);
+        this.off("pointerupoutside", this.pointerUpListener);
+        this.off("pointerup", this.pointerUpListener);
+    }
+
+    public removeRotationHandler(): void {
+        this.visible = false;
+
+        this.off("pointerdown", this.pointerDownListener);
+        this.cleanupRotationEvents();
+    }
+
+    private onPointerDown(event: FederatedPointerEvent, placeable: Placeable): void {
         event.stopPropagation();
 
         this.startRotation = placeable.rotation;
@@ -64,7 +84,7 @@ export class RotationHandler extends Sprite {
         this.setupRotationEvents(placeable);
     }
 
-    onPointerMove(event: FederatedPointerEvent, placeable: Placeable): void {
+    private onPointerMove(event: FederatedPointerEvent, placeable: Placeable): void {
         const localPos = placeable.toLocal(event.global);
         const currentAngle = Math.atan2(localPos.y, localPos.x);
         const deltaAngle = currentAngle - this.startPointerAngle;
@@ -79,7 +99,7 @@ export class RotationHandler extends Sprite {
         placeable.renderWires();
     }
 
-    onPointerUp(placeable: Placeable): void {
+    private onPointerUp(placeable: Placeable): void {
         // Snap the rotation to the nearest 90-degree increment
         const snappedRotation = Math.round(placeable.rotation / (Math.PI / 2)) * (Math.PI / 2);
         placeable.rotation = snappedRotation;
@@ -88,19 +108,7 @@ export class RotationHandler extends Sprite {
         this.cleanupRotationEvents();
     }
 
-    cleanupRotationEvents(): void {
-        this.off("globalpointermove", this.pointerMoveListener);
-        this.off("pointerupoutside", this.pointerUpListener);
-        this.off("pointerup", this.pointerUpListener);
-    }
-
-    cleanUp(): void {
-        this.visible = false;
-        this.off("pointerdown", this.pointerDownListener);
-        this.cleanupRotationEvents();
-    }
-
-    smoothRotation(currentRotation: number, targetRotation: number, smoothingFactor = 0.2): number {
+    private smoothRotation(currentRotation: number, targetRotation: number, smoothingFactor = 0.2): number {
         return currentRotation + (targetRotation - currentRotation) * smoothingFactor;
     }
 }

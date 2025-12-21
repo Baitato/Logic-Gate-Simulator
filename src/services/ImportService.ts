@@ -7,6 +7,7 @@ import { Wire } from "../models/Wire";
 
 export class ImportService {
     static #instance: ImportService;
+    static #initialized = false;
 
     private wires: Wire[] = [];
     private placeables: Placeable[] = [];
@@ -16,22 +17,29 @@ export class ImportService {
         this.viewport = viewport;
     }
 
-    public static async getInstance(): Promise<ImportService> {
+    public static init(): void {
+        if (this.#initialized) return;
+        const viewport = ViewportWrapper.getInstance();
+        this.#instance = new ImportService(viewport);
+        this.#initialized = true;
+    }
+
+    public static getInstance(): ImportService {
         if (!this.#instance) {
-            this.#instance = new ImportService(await ViewportWrapper.getInstance());
+            throw new Error('ImportService not initialized. Call init() first.');
         }
         return this.#instance;
     }
 
-    public async import(lines: string[], save: boolean = true): Promise<void> {
+    public import(lines: string[], save: boolean = true): void {
         this.wires = [];
         this.placeables = [];
 
-        const placeableMap = await this.firstPass(lines, save);
-        this.secondPass(lines, placeableMap);
+        const placeableMap = this.firstPass(lines, save);
+        this.secondPass(lines, placeableMap, save);
     }
 
-    private async firstPass(lines: string[], save: boolean): Promise<Map<number, Placeable>> {
+    private firstPass(lines: string[], save: boolean): Map<number, Placeable> {
         const placeableMap: Map<number, Placeable> = new Map<number, Placeable>();
 
         for (const line of lines) {
@@ -51,14 +59,14 @@ export class ImportService {
                 const isOn = fields[4] === "true";
                 id = parseInt(fields[5]);
 
-                placeable = await PlaceableObjectFactory.createSwitch(x, y, rotation, isOn);
+                placeable = PlaceableObjectFactory.createSwitch(x, y, rotation, isOn);
             } else if (type === PlaceableType.BULB) {
                 const x = parseFloat(fields[1]);
                 const y = parseFloat(fields[2]);
                 const rotation = parseFloat(fields[3]);
                 id = parseInt(fields[4]);
 
-                placeable = await PlaceableObjectFactory.createBulb(x, y, rotation);
+                placeable = PlaceableObjectFactory.createBulb(x, y, rotation);
             } else if (type === PlaceableType.CLOCK) {
                 const x = parseFloat(fields[1]);
                 const y = parseFloat(fields[2]);
@@ -66,7 +74,7 @@ export class ImportService {
                 const tickRate = parseInt(fields[4]);
                 id = parseInt(fields[5]);
 
-                placeable = await PlaceableObjectFactory.createClock(x, y, tickRate, rotation);
+                placeable = PlaceableObjectFactory.createClock(x, y, tickRate, rotation);
             }
             else if (type != "wire") {
                 const x = parseFloat(fields[1]);
@@ -74,7 +82,7 @@ export class ImportService {
                 const rotation = parseFloat(fields[3]);
                 id = parseInt(fields[4]);
 
-                placeable = await PlaceableObjectFactory.createGate(x, y, type as PlaceableType, rotation);
+                placeable = PlaceableObjectFactory.createGate(x, y, type as PlaceableType, rotation);
             }
 
             if (!placeable || !id) continue;
@@ -92,7 +100,7 @@ export class ImportService {
         return placeableMap;
     }
 
-    private secondPass(lines: string[], placeableMap: Map<number, Placeable>): void {
+    private secondPass(lines: string[], placeableMap: Map<number, Placeable>, save: boolean): void {
         for (const line of lines) {
             const trimmpedLine = line.trim();
             if (trimmpedLine.length === 0) continue;
@@ -111,7 +119,7 @@ export class ImportService {
 
                 const wire = new Wire(fromPoint, toPoint, this.viewport);
                 this.wires.push(wire);
-                this.createWire(wire);
+                this.createWire(wire, save);
             }
         }
     }
@@ -128,11 +136,12 @@ export class ImportService {
         placeable.savePlaceable();
     }
 
-    private createWire(wire: Wire) {
+    private createWire(wire: Wire, save: boolean) {
         this.viewport.addChild(wire);
         wire.sourcePoint.addWire(wire);
         wire.targetPoint.addWire(wire);
-        wire.render();
-        wire.saveWire();
+        if (save) {
+            wire.saveWire();
+        }
     }
 }

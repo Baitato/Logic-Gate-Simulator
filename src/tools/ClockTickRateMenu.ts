@@ -3,28 +3,29 @@ import { Input, Slider } from "@pixi/ui";
 
 export class ClockTickRateMenu extends Container {
     static #instance: ClockTickRateMenu;
+    static #initialized = false;
     private slider!: Slider;
     private valueInput!: Input;
 
     private constructor() {
         super();
-        this.isRenderGroup = true;
         this.zIndex = 1000;
         this.visible = false;
         this.position.set(window.innerWidth - 300, window.innerHeight - 175);
     }
 
-    public static async getInstance(): Promise<ClockTickRateMenu> {
-        if (!this.#instance) {
-            this.#instance = await ClockTickRateMenu.create();
-        }
-        return this.#instance;
+    public static init(): void {
+        if (this.#initialized) return;
+        this.#instance = new ClockTickRateMenu();
+        this.#instance.initializeMenu();
+        this.#initialized = true;
     }
 
-    private static async create(): Promise<ClockTickRateMenu> {
-        const menu = new ClockTickRateMenu();
-        await menu.initializeMenu();
-        return menu;
+    public static getInstance(): ClockTickRateMenu {
+        if (!this.#instance) {
+            throw new Error('ClockTickRateMenu not initialized. Call init() first.');
+        }
+        return this.#instance;
     }
 
     /** Gets the actual stored value (1-1000) from the slider */
@@ -50,7 +51,7 @@ export class ClockTickRateMenu extends Container {
         this.valueInput.value = `${value * 2}`;
     }
 
-    private async initializeMenu(): Promise<void> {
+    private initializeMenu(): void {
         const backgroundWidth = 275;
         const backgroundHeight = 150;
 

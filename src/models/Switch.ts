@@ -3,7 +3,7 @@ import { Coordinate } from "../types/ICoordinate";
 import { ConnectionPoint } from "./ConnectionPoint";
 import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
-import { loadSprite } from "../utils/assetLoader";
+import { createSprite } from "../utils/assetLoader";
 import { PlaceableType } from "../enums/PlaceableType";
 import { AssetName } from "../enums/AssetName";
 
@@ -18,9 +18,14 @@ export class Switch extends Placeable {
     inputPoints: ConnectionPoint[] = [];
     isOn: boolean = false;
 
-    constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false) {
-        super(x, y, rotation);
+    constructor(x: number, y: number) {
+        super(x, y);
+    }
+
+    public setIsOn(isOn: boolean): Switch {
         this.isOn = isOn;
+        this.render();
+        return this;
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -31,10 +36,10 @@ export class Switch extends Placeable {
         return [{ x: 25, y: 0 }];
     }
 
-    public override async setUp(): Promise<Switch> {
-        await super.setUp(Switch.assetName);
+    public override setUp(): Switch {
+        super.setUp(Switch.assetName);
 
-        this.onSprite = await loadSprite(Switch.onAssetName, dimensions);
+        this.onSprite = createSprite(Switch.onAssetName, dimensions);
         this.addChild(this.onSprite);
 
         this.render();

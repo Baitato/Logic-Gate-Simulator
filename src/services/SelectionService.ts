@@ -5,6 +5,7 @@ import { getRoundedPoint } from "../utils/util";
 
 export class SelectionService {
     static #instance: SelectionService;
+    static #initialized = false;
 
     private viewport: ViewportWrapper;
     private startPoint: Dimension | null = null;
@@ -22,10 +23,16 @@ export class SelectionService {
         this.viewport.on("pointerdown", (event) => this.startSelection(event));
     }
 
-    public static async getInstance(): Promise<SelectionService> {
+    public static init(): void {
+        if (this.#initialized) return;
+        const viewport = ViewportWrapper.getInstance();
+        this.#instance = new SelectionService(viewport);
+        this.#initialized = true;
+    }
+
+    public static getInstance(): SelectionService {
         if (!this.#instance) {
-            const viewport = await ViewportWrapper.getInstance();
-            this.#instance = new SelectionService(viewport);
+            throw new Error('SelectionService not initialized. Call init() first.');
         }
         return this.#instance;
     }

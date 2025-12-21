@@ -3,7 +3,7 @@ import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
 import { ConnectionPoint } from "./ConnectionPoint";
 import { Coordinate } from "../types/ICoordinate";
-import { loadSprite } from "../utils/assetLoader";
+import { createSprite } from "../utils/assetLoader";
 import { Dimension } from "../types/IDimension";
 import { AssetName } from "../enums/AssetName";
 import { Value } from "../types/IValue";
@@ -18,8 +18,8 @@ export class Bulb extends Placeable {
     inputPoints: ConnectionPoint[] = [];
     outputPoints: ConnectionPoint[] = [];
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, rotation);
+    constructor(x: number, y: number) {
+        super(x, y);
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -30,10 +30,10 @@ export class Bulb extends Placeable {
         return [];
     }
 
-    public override async setUp(): Promise<Bulb> {
-        await super.setUp(Bulb.assetName);
+    public override setUp(): Bulb {
+        super.setUp(Bulb.assetName);
 
-        this.onSprite = await loadSprite(Bulb.onAssetName, dimensions);
+        this.onSprite = createSprite(Bulb.onAssetName, dimensions);
         this.addChild(this.onSprite);
         this.onSprite.visible = false;
 

@@ -17,6 +17,8 @@ export class ExportTool extends MiscTool {
             content += wire.exportAsString() + "\n";
         });
 
+        console.log(StateManager.wireById);
+
         const blob = new Blob([content], { type: 'text/plain' });
 
         // Create a temporary URL for the blob

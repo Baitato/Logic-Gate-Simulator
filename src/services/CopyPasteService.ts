@@ -7,28 +7,42 @@ import { ViewportWrapper } from '../core/ViewportWrapper';
 import PositionService from './viewport/PositionService';
 import { Wire } from '../models/Wire';
 import { Placeable } from '../models/Placeable';
+import { ApplicationWrapper } from '../core/ApplicationWrapper';
 
 export class CopyPasteService {
     static #instance: CopyPasteService;
+    static #initialized = false;
 
     private importService: ImportService;
     private selectionService: SelectionService;
+    private viewport: ViewportWrapper;
+    private app: ApplicationWrapper;
     private startPosition: Dimension | null = null;
     private selectionRect: Graphics | null = null;
     private pasteable: string[] = [];
 
-    private constructor(importService: ImportService, selectionService: SelectionService) {
+    private constructor(importService: ImportService, selectionService: SelectionService, viewport: ViewportWrapper, app: ApplicationWrapper) {
         this.importService = importService;
         this.selectionService = selectionService;
+        this.viewport = viewport;
+        this.app = app;
     }
 
-    public static async getInstance() {
-        if (!this.#instance) {
-            const importService = await ImportService.getInstance();
-            const selectionService = await SelectionService.getInstance();
-            this.#instance = new CopyPasteService(importService, selectionService);
-        }
+    public static init(): void {
+        if (this.#initialized) return;
+        const importService = ImportService.getInstance();
+        const selectionService = SelectionService.getInstance();
+        const viewport = ViewportWrapper.getInstance();
+        const app = ApplicationWrapper.getInstance();
+        this.#instance = new CopyPasteService(importService, selectionService, viewport, app);
+        this.#initialized = true;
+        this.#instance.registerEventHandlers();
+    }
 
+    public static getInstance(): CopyPasteService {
+        if (!this.#instance) {
+            throw new Error('CopyPasteService not initialized. Call init() first.');
+        }
         return this.#instance;
     }
 
@@ -56,24 +70,28 @@ export class CopyPasteService {
             this.pasteable.push(obj.exportAsString(-startPoint.x, -startPoint.y));
         });
 
+        const addedWires = new Set<Wire>();
         objectsInSelection.forEach((obj) => {
             obj.getAllConnectionPoints().forEach((point) => {
                 point.wires.forEach((wire) => {
-                    this.pasteable.push(wire.exportAsString());
+                    if (!addedWires.has(wire)) {
+                        addedWires.add(wire);
+                        this.pasteable.push(wire.exportAsString());
+                    }
                 })
             })
         });
     }
 
-    public async initializeDisplayPastePreview(pos: Point): Promise<void> {
-        const localPos = (await ViewportWrapper.getInstance()).toLocal(pos);
+    public initializeDisplayPastePreview(pos: Point): void {
+        const localPos = ViewportWrapper.getInstance().toLocal(pos);
         const pastableCopy = this.getPastable(localPos);
 
-        await this.importService.import(pastableCopy, false);
+        this.importService.import(pastableCopy, false);
     }
 
-    public async displayPastePreview(pos: Point, wires: Wire[], placeables: Placeable[]): Promise<void> {
-        const viewport = await ViewportWrapper.getInstance();
+    public displayPastePreview(pos: Point, wires: Wire[], placeables: Placeable[]): void {
+        const viewport = ViewportWrapper.getInstance();
         const localPos = viewport.toLocal(pos);
         const curPos = { x: getRoundedPoint(localPos.x), y: getRoundedPoint(localPos.y) };
 
@@ -134,12 +152,20 @@ export class CopyPasteService {
         }
     }
 
-    public async paste(pos: Point): Promise<void> {
+    public paste(pos: Point): void {
         this.clearSelectionRect();
-        const localPos = (await ViewportWrapper.getInstance()).toLocal(pos);
+
+        // Destroy preview objects before creating final pasted objects
+        const previewWires = this.importService.getWires();
+        const previewPlaceables = this.importService.getPlaceables();
+
+        previewWires.forEach(wire => wire.destroy());
+        previewPlaceables.forEach(placeable => placeable.destroy());
+
+        const localPos = ViewportWrapper.getInstance().toLocal(pos);
         const pastableCopy = this.getPastable(localPos);
 
-        await this.importService.import(pastableCopy);
+        this.importService.import(pastableCopy);
     }
 
     private getPastable(localPos: Point): string[] {
@@ -186,5 +212,36 @@ export class CopyPasteService {
         }
 
         return true;
+    }
+
+    private registerEventHandlers(): void {
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'c') {
+                this.copy();
+            }
+        });
+
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'v') {
+                const interaction = this.app.renderer.events;
+                const pos = interaction.pointer.global;
+
+                this.initializeDisplayPastePreview(pos);
+                const wires = this.importService.getWires();
+                const placeables = this.importService.getPlaceables();
+
+                const onMove = () => {
+                    const movePos = interaction.pointer.global;
+                    this.displayPastePreview(movePos, wires, placeables);
+                };
+
+                this.viewport.on('pointermove', onMove);
+
+                this.viewport.once('pointerdown', () => {
+                    this.paste(pos);
+                    this.viewport.off('pointermove', onMove);
+                });
+            }
+        });
     }
 }

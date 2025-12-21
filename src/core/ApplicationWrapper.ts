@@ -2,14 +2,21 @@ import { Application } from "pixi.js";
 
 export class ApplicationWrapper extends Application {
     static #instance: ApplicationWrapper;
+    static #initialized = false;
 
     private constructor() {
         super();
     }
 
-    static async getInstance(): Promise<ApplicationWrapper> {
-        if(!this.#instance) {
-            this.#instance = await ApplicationWrapper.create();
+    static async init(): Promise<void> {
+        if (this.#initialized) return;
+        this.#instance = await ApplicationWrapper.create();
+        this.#initialized = true;
+    }
+
+    static getInstance(): ApplicationWrapper {
+        if (!this.#instance) {
+            throw new Error('ApplicationWrapper not initialized. Call init() first.');
         }
         return this.#instance;
     }

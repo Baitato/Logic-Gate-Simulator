@@ -8,6 +8,7 @@ import { WireState } from "./WireState";
 
 export class StateManager {
     static #instance: StateManager;
+    static #initialized = false;
     static activeConnectionPoint: ConnectionPoint | null = null;
     static wireIdCounter: number = 0;
     static placeableById: Map<number, Placeable> = new Map<number, Placeable>();
@@ -31,15 +32,20 @@ export class StateManager {
         this.viewport.on("pointerdown", () => this.onViewportPress(), this);
     }
 
-    public static async getInstance(): Promise<StateManager> {
-        if (!this.#instance) {
-            const viewport = await ViewportWrapper.getInstance();
-            const placeableState = await PlaceableState.getInstance();
-            const wireState = WireState.getInstance();
-            const unplacedWireState = UnplacedWireState.getInstance();
-            this.#instance = new StateManager(viewport, placeableState, wireState, unplacedWireState);
-        }
+    public static init(): void {
+        if (this.#initialized) return;
+        const viewport = ViewportWrapper.getInstance();
+        const placeableState = PlaceableState.getInstance();
+        const wireState = WireState.getInstance();
+        const unplacedWireState = UnplacedWireState.getInstance();
+        this.#instance = new StateManager(viewport, placeableState, wireState, unplacedWireState);
+        this.#initialized = true;
+    }
 
+    public static getInstance(): StateManager {
+        if (!this.#instance) {
+            throw new Error('StateManager not initialized. Call init() first.');
+        }
         return this.#instance;
     }
 

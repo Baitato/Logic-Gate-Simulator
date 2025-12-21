@@ -7,11 +7,11 @@ export class NorGate extends Gate {
     static type: PlaceableType = PlaceableType.NOR;
     static assetName: string = AssetName.NOR;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, NorGate.type, rotation);
+    constructor(x: number, y: number) {
+        super(x, y, NorGate.type);
     }
 
-    public override async setUp() {
+    public override setUp() {
         return super.setUp(NorGate.assetName);
     }
 
