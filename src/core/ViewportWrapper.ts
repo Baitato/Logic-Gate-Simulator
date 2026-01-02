@@ -1,13 +1,15 @@
 import { Viewport } from "pixi-viewport";
 import { ApplicationWrapper } from "./ApplicationWrapper";
+import { ViewportListener, ViewportPublisher } from "../observer/ViewportObserver";
 
 const worldWidth: number = 10000;
 const worldHeight: number = 10000;
 
-export class ViewportWrapper extends Viewport {
+export class ViewportWrapper extends Viewport implements ViewportPublisher {
     public app: ApplicationWrapper;
     static #instance: ViewportWrapper;
     static #initialized = false;
+    private viewportListeners: ViewportListener[] = [];
     private edgeThreshold: number = 30; // Distance from edge to start panning (pixels)
     private panSpeed: number = 7; // Base panning speed (pixels per frame)
     private panDirection: { x: number; y: number } = { x: 0, y: 0 };
@@ -24,8 +26,9 @@ export class ViewportWrapper extends Viewport {
 
         this.app = app;
 
+        this.on("pointerdown", () => this.onViewportClick());
         window.addEventListener("resize", () => this.handleResize());
-        document.addEventListener("keydown", (event) => this.onSpaceKeyDown(event));
+        window.addEventListener("keydown", (event) => this.onKeyPress(event));
         window.addEventListener("mousemove", (event) => this.handleMouseMove(event));
         window.addEventListener("blur", () => this.stopPanning());
         document.addEventListener("mouseleave", () => this.stopPanning());
@@ -54,6 +57,10 @@ export class ViewportWrapper extends Viewport {
         return this.#instance;
     }
 
+    public addViewportListener(listener: ViewportListener): void {
+        this.viewportListeners.push(listener);
+    }
+
     private resetViewport(): void {
         this.moveCenter(0, 0);
         this.setZoom(1.25, true);
@@ -65,10 +72,16 @@ export class ViewportWrapper extends Viewport {
         this.screenHeight = window.innerHeight;
     }
 
-    private onSpaceKeyDown(event: KeyboardEvent): void {
+    private onKeyPress(event: KeyboardEvent): void {
+        this.viewportListeners.forEach(listener => listener.onKeyPress(event));
+
         if (event.code === "Space") {
             this.resetViewport();
         }
+    }
+
+    private onViewportClick(): void {
+        this.viewportListeners.forEach(listener => listener.onViewportClick());
     }
 
     private handleMouseMove(event: MouseEvent): void {

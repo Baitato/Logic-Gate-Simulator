@@ -8,15 +8,7 @@ export class NandGate extends Gate {
     static assetName: string = AssetName.NAND;
 
     constructor(x: number, y: number) {
-        super(x, y, NandGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(NandGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return NandGate.assetName;
+        super(x, y, NandGate.type, NandGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

@@ -8,15 +8,7 @@ export class BufferGate extends Gate {
     static assetName: string = AssetName.BUFFER;
 
     constructor(x: number, y: number) {
-        super(x, y, BufferGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(BufferGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return BufferGate.assetName;
+        super(x, y, BufferGate.type, BufferGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

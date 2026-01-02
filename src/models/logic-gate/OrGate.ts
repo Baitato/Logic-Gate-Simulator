@@ -8,15 +8,7 @@ export class OrGate extends Gate {
     static assetName: string = AssetName.OR;
 
     constructor(x: number, y: number) {
-        super(x, y, OrGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(OrGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return OrGate.assetName;
+        super(x, y, OrGate.type, OrGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

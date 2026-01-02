@@ -8,7 +8,7 @@ import { ImportTool } from "./ImportTool";
 import { ExportTool } from "./ExportTool";
 import { MiscTool } from "./MiscTool";
 import { ImportService } from '../services/ImportService';
-import { PlacementService } from '../services/viewport/PlacementService';
+import { PlacementService } from "../services/PlacementService";
 
 // Layout constants - all dimensions derive from these
 const ITEM_SIZE = 50;
@@ -57,7 +57,7 @@ export class Toolbox extends Container {
 
     public static getInstance(): Toolbox {
         if (!this.#instance) {
-            throw new Error('Toolbox not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }

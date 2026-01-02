@@ -4,9 +4,10 @@ import { placeableDimensions } from "../../utils/constants";
 import { Placeable } from "../Placeable";
 import { AssetName } from "../../enums/AssetName";
 
-export class RotationHandler extends Sprite {
-    static #instance: RotationHandler;
+export class RotationWidget extends Sprite {
+    static #instance: RotationWidget;
     static #initialized = false;
+    private currentPlaceable: Placeable | null = null;
     private startPointerAngle: number = 0;
     private startRotation: number = 0;
     private pointerMoveListener?: (event: FederatedPointerEvent) => void;
@@ -17,7 +18,7 @@ export class RotationHandler extends Sprite {
         super();
     }
 
-    setupRotationHandler(): RotationHandler {
+    private setupRotationHandler(): RotationWidget {
         this.texture = getPreloadedTexture(AssetName.ROTATION_WIDGET);
 
         this.anchor.set(0.5, 0.5);
@@ -27,27 +28,28 @@ export class RotationHandler extends Sprite {
         this.eventMode = "static";
         this.cursor = "pointer";
         this.zIndex = -10;
-        this.visible = false;
 
         return this;
     }
 
     public static init(): void {
         if (this.#initialized) return;
-        this.#instance = new RotationHandler();
+        this.#instance = new RotationWidget();
         this.#instance.setupRotationHandler();
         this.#initialized = true;
     }
 
-    public static getInstance(): RotationHandler {
+    public static getInstance(): RotationWidget {
         if (!this.#instance) {
-            throw new Error('RotationHandler not initialized. Call init() first.');
+            throw new Error('RotationWidget not initialized. Call init() first.');
         }
         return this.#instance;
     }
 
     public addRotationHandler(placeable: Placeable): void {
-        this.visible = true;
+        this.currentPlaceable = placeable;
+        this.currentPlaceable.addChild(this);
+
         this.pointerDownListener = (event) => this.onPointerDown(event, placeable);
         this.on("pointerdown", this.pointerDownListener);
     }
@@ -68,10 +70,11 @@ export class RotationHandler extends Sprite {
     }
 
     public removeRotationHandler(): void {
-        this.visible = false;
+        this.currentPlaceable?.removeChild(this);
 
         this.off("pointerdown", this.pointerDownListener);
         this.cleanupRotationEvents();
+        this.currentPlaceable = null;
     }
 
     private onPointerDown(event: FederatedPointerEvent, placeable: Placeable): void {

@@ -4,7 +4,7 @@ import { ImportService } from './ImportService';
 import { Graphics, Point } from 'pixi.js';
 import { getRoundedPoint } from '../utils/util';
 import { ViewportWrapper } from '../core/ViewportWrapper';
-import PositionService from './viewport/PositionService';
+import PositionService from './PositionService';
 import { Wire } from '../models/Wire';
 import { Placeable } from '../models/Placeable';
 import { ApplicationWrapper } from '../core/ApplicationWrapper';
@@ -41,7 +41,7 @@ export class CopyPasteService {
 
     public static getInstance(): CopyPasteService {
         if (!this.#instance) {
-            throw new Error('CopyPasteService not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }

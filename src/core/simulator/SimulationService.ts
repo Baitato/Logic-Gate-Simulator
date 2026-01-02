@@ -1,5 +1,5 @@
 import { PlaceableType } from '../../enums/PlaceableType';
-import { StateManager } from '../../state/StateManager';
+import { StorageManager } from '../../state/StateManager';
 import { getCondensedGraph } from './condensedGraph';
 import { FunctionalGate } from './FunctionalGate';
 import { Clock } from '../../models/Clock';
@@ -10,6 +10,7 @@ import { Value } from '../../types/IValue';
 
 export class SimulationService {
     static #instance: SimulationService;
+    private MAX_TICKS: number = 4000;
     public wires: Map<number, Wire> = new Map();
     public gates: Map<number, FunctionalGate> = new Map();
     public adjacencyList: Map<number, Set<number>> = new Map();
@@ -69,7 +70,7 @@ export class SimulationService {
             }
         }
 
-        StateManager.nextTick();
+        this.nextTick();
     }
 
     public flipSwitch(switchId: number): void {
@@ -194,6 +195,13 @@ export class SimulationService {
         if (gate.type === PlaceableType.CLOCK) {
             return (gate as Clock).getTickRate();
         }
+    }
+
+    private nextTick(): number {
+        StorageManager.currentTick += 1;
+        StorageManager.currentTick %= this.MAX_TICKS;
+
+        return StorageManager.currentTick;
     }
 }
 

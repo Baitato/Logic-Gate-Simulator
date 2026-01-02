@@ -3,15 +3,9 @@ import { ViewportWrapper } from './core/ViewportWrapper';
 import { Grid } from './core/Grid';
 import { Toolbox } from './tools/Toolbox';
 import { ClockTickRateMenu } from './tools/ClockTickRateMenu';
-import { CopyPasteService } from './services/CopyPasteService';
-import { ImportService } from './services/ImportService';
 import { SimulationService } from './core/simulator/SimulationService';
 import { getAssetNames, preloadAllAssets } from './utils/assetLoader';
-import { PlaceableState } from './state/PlaceableState';
-import { RotationHandler } from './models/logic-gate/RotationHandler';
-import { PlacementService } from './services/viewport/PlacementService';
-import { SelectionService } from './services/SelectionService';
-import { StateManager } from './state/StateManager';
+import { initializationPhases } from './core/AppInitializer';
 
 const loadingScreen = document.getElementById('loading-screen')!;
 const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
@@ -36,23 +30,7 @@ function showError(error: Error) {
 
 async function initializeApp() {
     try {
-        // Define initialization phases
-        const initSteps: Array<{ name: string; init: () => void | Promise<void> }> = [
-            { name: 'Application', init: () => ApplicationWrapper.init() },
-            { name: 'Viewport', init: () => ViewportWrapper.init() },
-            { name: 'Grid', init: () => Grid.init() },
-            { name: 'RotationHandler', init: () => RotationHandler.init() },
-            { name: 'ClockTickRateMenu', init: () => ClockTickRateMenu.init() },
-            { name: 'PlaceableState', init: () => PlaceableState.init() },
-            { name: 'ImportService', init: () => ImportService.init() },
-            { name: 'PlacementService', init: () => PlacementService.init() },
-            { name: 'SelectionService', init: () => SelectionService.init() },
-            { name: 'CopyPasteService', init: () => CopyPasteService.init() },
-            { name: 'StateManager', init: () => StateManager.init() },
-            { name: 'Toolbox', init: () => Toolbox.init() },
-        ];
-
-        const totalSteps = getAssetNames().length + initSteps.length;
+        const totalSteps = getAssetNames().length + initializationPhases.length;
         let stepCount = 0;
 
         updateProgress(0, 'Loading assets...');
@@ -60,8 +38,7 @@ async function initializeApp() {
             updateProgress(getPercent(++stepCount, totalSteps), `Loading assets... ${current}/${total} (${assetName})`);
         });
 
-        for (let i = 0; i < initSteps.length; i++) {
-            const step = initSteps[i];
+        for (const step of initializationPhases) {
             updateProgress(getPercent(++stepCount, totalSteps), `Initializing ${step.name}...`);
             await step.init();
         }

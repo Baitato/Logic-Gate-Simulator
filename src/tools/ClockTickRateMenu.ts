@@ -1,9 +1,16 @@
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { Input, Slider } from "@pixi/ui";
+import { PlaceableListener } from "../observer/PlaceableObserver";
+import { Placeable } from "../models/Placeable";
+import { ViewportListener } from "../observer/ViewportObserver";
+import { PlaceableType } from "../enums/PlaceableType";
+import { Clock } from "../models/Clock";
+import { ViewportWrapper } from "../core/ViewportWrapper";
 
-export class ClockTickRateMenu extends Container {
+export class ClockTickRateMenu extends Container implements PlaceableListener, ViewportListener {
     static #instance: ClockTickRateMenu;
     static #initialized = false;
+    private selected: Clock | null = null;
     private slider!: Slider;
     private valueInput!: Input;
 
@@ -19,11 +26,12 @@ export class ClockTickRateMenu extends Container {
         this.#instance = new ClockTickRateMenu();
         this.#instance.initializeMenu();
         this.#initialized = true;
+        ViewportWrapper.getInstance().addViewportListener(this.#instance);
     }
 
     public static getInstance(): ClockTickRateMenu {
         if (!this.#instance) {
-            throw new Error('ClockTickRateMenu not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }
@@ -35,7 +43,6 @@ export class ClockTickRateMenu extends Container {
 
     /** Sets the value programmatically (1-1000), updates both slider and input display */
     public setValue(value: number): void {
-        // Clamp to bounds [1, 1000]
         if (value < 1) {
             value = 1;
         } else if (value > 1000) {
@@ -44,11 +51,11 @@ export class ClockTickRateMenu extends Container {
 
         value = Math.round(value);
 
-        // Update slider
         this.slider.value = value;
 
-        // Update input display (shows value * 2)
         this.valueInput.value = `${value * 2}`;
+
+        this.selected?.setTickRate(value);
     }
 
     private initializeMenu(): void {
@@ -79,29 +86,24 @@ export class ClockTickRateMenu extends Container {
             style: titleStyle,
         });
 
-        // Position at top middle of background
-        titleText.anchor.set(0.5, 0);  // Center horizontally
-        titleText.position.set(backgroundWidth / 2, 10);  // Center X, 10px from top
+        titleText.anchor.set(0.5, 0);
+        titleText.position.set(backgroundWidth / 2, 10);
 
         this.addChild(titleText);
 
-        // Create slider track (background)
         const sliderWidth = 200;
         const sliderBG = new Graphics()
             .roundRect(0, 0, sliderWidth, 8, 4)
             .fill({ color: 0x555555 });
 
-        // Create slider fill
         const sliderFill = new Graphics()
             .roundRect(0, 0, sliderWidth, 8, 4)
             .fill({ color: 0x4a9eff });
 
-        // Create slider handle with smooth circle (use regularPoly for smoother edges)
         const sliderHandle = new Graphics()
-            .regularPoly(0, 0, 12, 32)  // 32 sides for a smooth circle
+            .regularPoly(0, 0, 12, 32)
             .fill({ color: 0xffffff });
 
-        // Create slider
         this.slider = new Slider({
             bg: sliderBG,
             fill: sliderFill,
@@ -114,7 +116,6 @@ export class ClockTickRateMenu extends Container {
         this.slider.position.set((backgroundWidth - sliderWidth) / 2, 70);
         this.addChild(this.slider);
 
-        // Create editable input for value display (shows value * 2)
         const inputWidth = 80;
         const inputHeight = 30;
 
@@ -139,52 +140,58 @@ export class ClockTickRateMenu extends Container {
             maxLength: 4,
         });
 
-        // Center the input field
         this.valueInput.pivot.set(inputWidth / 2, 0);
         this.valueInput.position.set(backgroundWidth / 2, 95);
         this.addChild(this.valueInput);
 
-        // Track if slider is being dragged to avoid conflicts
-        let isSliderDragging = false;
-
-        // Update input when slider changes (only if not currently editing input)
         this.slider.onUpdate.connect((value) => {
-            isSliderDragging = true;
-            const displayValue = Math.round(value) * 2;
+            const roundedValue = Math.round(value);
+            const displayValue = roundedValue * 2;
             this.valueInput.value = `${displayValue}`;
-            isSliderDragging = false;
+
+            // Update the clock in real-time
+            this.handleInputChange(`${displayValue}`);
         });
 
-        // Handle input changes - validate and update slider only on Enter
-        this.valueInput.onEnter.connect((value) => {
-            if (!isSliderDragging) {
-                this.handleInputChange(value);
-            }
-        });
     }
 
     private handleInputChange(inputValue: string): void {
         let displayValue = parseInt(inputValue, 10);
 
-        // If not a valid number, reset to current slider value
         if (isNaN(displayValue)) {
             this.valueInput.value = `${Math.round(this.slider.value) * 2}`;
             return;
         }
 
-        // Clamp to bounds [2, 2000]
         if (displayValue < 2) {
             displayValue = 2;
         } else if (displayValue > 2000) {
             displayValue = 2000;
         }
 
-        // If odd, drop down to previous even number
         if (displayValue % 2 !== 0) {
             displayValue = displayValue - 1;
         }
 
-        // Use setValue with the actual value (displayValue / 2)
         this.setValue(displayValue / 2);
+    }
+
+    public onPlaceableClick(placeable: Placeable): void {
+        if (placeable.type !== PlaceableType.CLOCK)
+            return;
+
+        this.visible = true;
+        this.selected = placeable as Clock;
+        this.setValue(this.selected.getTickRate());
+    }
+
+    public onViewportClick(): void {
+        this.visible = false;;
+        this.selected = null;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public onKeyPress(_event: KeyboardEvent): void {
+        // No action needed for clock tick rate menu on key press
     }
 }

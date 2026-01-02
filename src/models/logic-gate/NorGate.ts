@@ -8,15 +8,7 @@ export class NorGate extends Gate {
     static assetName: string = AssetName.NOR;
 
     constructor(x: number, y: number) {
-        super(x, y, NorGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(NorGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return NorGate.assetName;
+        super(x, y, NorGate.type, NorGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

@@ -5,6 +5,8 @@ import { AssetName } from '../enums/AssetName';
 const assetsPath = "assets/56x56/";
 
 const textureCache = new Map<string, Texture>();
+let connectionPointNormalTexture: Texture | null = null;
+let connectionPointHoverTexture: Texture | null = null;
 
 export async function preloadAllAssets(onProgress: (current: number, total: number, asset: string) => void): Promise<void> {
     const assetNames = getAssetNames();
@@ -17,6 +19,9 @@ export async function preloadAllAssets(onProgress: (current: number, total: numb
         textureCache.set(assetName, texture);
         onProgress(i + 1, allAssets.length, assetName);
     }
+
+    // Create cached textures for connection points
+    createConnectionPointTextures();
 }
 
 export function getAssetNames(): string[] {
@@ -41,4 +46,35 @@ export function createSprite(assetName: string, dimensions: Dimension): Sprite {
     sprite.eventMode = "static";
     sprite.cursor = "pointer";
     return sprite;
+}
+
+function createConnectionPointTextures(): void {
+    // Create normal state texture (radius 3)
+    connectionPointNormalTexture = createCircleTexture(3);
+
+    // Create hover state texture (radius 4.5)
+    connectionPointHoverTexture = createCircleTexture(4.5);
+}
+
+function createCircleTexture(radius: number): Texture {
+    const size = Math.ceil(radius * 2 + 2);
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    return Texture.from(canvas);
+}
+
+export function getConnectionPointTexture(hover: boolean): Texture {
+    const texture = hover ? connectionPointHoverTexture : connectionPointNormalTexture;
+    if (!texture) {
+        throw new Error('Connection point textures not initialized. Call preloadAllAssets() first.');
+    }
+    return texture;
 }

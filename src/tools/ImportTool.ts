@@ -1,7 +1,7 @@
 import { AssetName } from "../enums/AssetName";
 import { MiscTool } from "./MiscTool";
 import { ImportService } from '../services/ImportService';
-import PositionService from '../services/viewport/PositionService';
+import PositionService from '../services/PositionService';
 
 export class ImportTool extends MiscTool {
     private importService: ImportService;

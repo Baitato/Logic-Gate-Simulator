@@ -1,7 +1,6 @@
 import { Sprite } from "pixi.js";
 import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
-import { ConnectionPoint } from "./ConnectionPoint";
 import { Coordinate } from "../types/ICoordinate";
 import { createSprite } from "../utils/assetLoader";
 import { Dimension } from "../types/IDimension";
@@ -15,11 +14,15 @@ export class Bulb extends Placeable {
     static assetName: string = AssetName.BULB_OFF;
     static onAssetName: string = AssetName.BULB_ON;
     onSprite?: Sprite | undefined;
-    inputPoints: ConnectionPoint[] = [];
-    outputPoints: ConnectionPoint[] = [];
 
     constructor(x: number, y: number) {
-        super(x, y);
+        super(x, y, Bulb.assetName);
+
+        this.onSprite = createSprite(Bulb.onAssetName, dimensions);
+        this.addChild(this.onSprite);
+        this.onSprite.visible = false;
+
+        this.addConnectionPoints();
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -28,17 +31,6 @@ export class Bulb extends Placeable {
 
     protected override getOutputPoints(): Coordinate[] {
         return [];
-    }
-
-    public override setUp(): Bulb {
-        super.setUp(Bulb.assetName);
-
-        this.onSprite = createSprite(Bulb.onAssetName, dimensions);
-        this.addChild(this.onSprite);
-        this.onSprite.visible = false;
-
-        this.addConnectionPoints();
-        return this;
     }
 
     public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {

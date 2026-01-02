@@ -32,7 +32,7 @@ export class SelectionService {
 
     public static getInstance(): SelectionService {
         if (!this.#instance) {
-            throw new Error('SelectionService not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }

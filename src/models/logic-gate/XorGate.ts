@@ -8,15 +8,7 @@ export class XorGate extends Gate {
     static assetName: string = AssetName.XOR;
 
     constructor(x: number, y: number) {
-        super(x, y, XorGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(XorGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return XorGate.assetName;
+        super(x, y, XorGate.type, XorGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

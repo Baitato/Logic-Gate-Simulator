@@ -8,15 +8,7 @@ export class NotGate extends Gate {
     static assetName: string = AssetName.NOT;
 
     constructor(x: number, y: number) {
-        super(x, y, NotGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(NotGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return NotGate.assetName;
+        super(x, y, NotGate.type, NotGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

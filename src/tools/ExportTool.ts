@@ -1,5 +1,5 @@
 import { AssetName } from "../enums/AssetName";
-import { StateManager } from "../state/StateManager";
+import { StorageManager } from "../state/StateManager";
 import { MiscTool } from "./MiscTool";
 
 export class ExportTool extends MiscTool {
@@ -10,14 +10,14 @@ export class ExportTool extends MiscTool {
     public onClick(): void {
         let content = "";
 
-        StateManager.placeableById.forEach((placeable) => {
+        StorageManager.placeableById.forEach((placeable) => {
             content += placeable.exportAsString() + "\n";
         });
-        StateManager.wireById.forEach((wire) => {
+        StorageManager.wireById.forEach((wire) => {
             content += wire.exportAsString() + "\n";
         });
 
-        console.log(StateManager.wireById);
+        console.log(StorageManager.wireById);
 
         const blob = new Blob([content], { type: 'text/plain' });
 

@@ -1,4 +1,4 @@
-import { Placeable } from "../../models/Placeable";
+import { Placeable } from "../models/Placeable";
 
 const positions = new Map<string, Placeable>();
 const xCoords = new Map<number, Set<string>>(); // x -> set of keys at that x

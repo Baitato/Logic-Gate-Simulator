@@ -26,7 +26,7 @@ export class ImportService {
 
     public static getInstance(): ImportService {
         if (!this.#instance) {
-            throw new Error('ImportService not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }

@@ -1,9 +1,9 @@
 import { FederatedPointerEvent, Point } from 'pixi.js';
-import { getCellCenter } from '../../utils/constants';
-import { Placeable } from '../../models/Placeable';
-import { PlaceableObjectFactory } from '../../factory/PlaceableObjectFactory';
-import { PlaceableType } from '../../enums/PlaceableType';
-import { ViewportWrapper } from '../../core/ViewportWrapper';
+import { ViewportWrapper } from '../core/ViewportWrapper';
+import { PlaceableType } from '../enums/PlaceableType';
+import { PlaceableObjectFactory } from '../factory/PlaceableObjectFactory';
+import { Placeable } from '../models/Placeable';
+import { getCellCenter } from '../utils/constants';
 import PositionService from './PositionService';
 
 export class PlacementService {
@@ -29,7 +29,7 @@ export class PlacementService {
 
     public static getInstance(): PlacementService {
         if (!this.#instance) {
-            throw new Error('PlacementService not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }
@@ -68,7 +68,6 @@ export class PlacementService {
 
     private onPlace(event: FederatedPointerEvent, placeable: Placeable): void {
         if (PositionService.getObject(placeable.x, placeable.y) != undefined) {
-            console.log('in');
             return;
         }
 

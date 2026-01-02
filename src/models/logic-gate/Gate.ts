@@ -1,18 +1,15 @@
 import { Coordinate } from "../../types/ICoordinate";
-import { ConnectionPoint } from "../ConnectionPoint";
 import { Placeable } from "../Placeable";
 import { PlaceableType } from '../../enums/PlaceableType';
 
 export abstract class Gate extends Placeable {
-    outputPoints: ConnectionPoint[] = [];
-    inputPoints: ConnectionPoint[] = [];
     type: PlaceableType;
 
     protected abstract getInputPoints(): Coordinate[];
     protected abstract getOutputPoints(): Coordinate[];
 
-    constructor(x: number, y: number, type: PlaceableType) {
-        super(x, y);
+    constructor(x: number, y: number, type: PlaceableType, assetName: string) {
+        super(x, y, assetName);
         this.type = type;
     }
 

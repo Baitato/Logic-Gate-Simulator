@@ -8,15 +8,7 @@ export class XnorGate extends Gate {
     static assetName: string = AssetName.XNOR;
 
     constructor(x: number, y: number) {
-        super(x, y, XnorGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(XnorGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return XnorGate.assetName;
+        super(x, y, XnorGate.type, XnorGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

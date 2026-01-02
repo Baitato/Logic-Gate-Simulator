@@ -24,7 +24,7 @@ export class Grid extends Graphics {
 
     static getInstance(): Grid {
         if (!this.#instance) {
-            throw new Error('Grid not initialized. Call init() first.');
+            this.init();
         }
         return this.#instance;
     }

@@ -8,15 +8,7 @@ export class AndGate extends Gate {
     static assetName: string = AssetName.AND;
 
     constructor(x: number, y: number) {
-        super(x, y, AndGate.type);
-    }
-
-    public override setUp() {
-        return super.setUp(AndGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return AndGate.assetName;
+        super(x, y, AndGate.type, AndGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {
