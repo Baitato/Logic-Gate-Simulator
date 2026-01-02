@@ -7,16 +7,8 @@ export class OrGate extends Gate {
     static type: PlaceableType = PlaceableType.OR;
     static assetName: string = AssetName.OR;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, OrGate.type, rotation);
-    }
-
-    public override async setUp() {
-        return super.setUp(OrGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return OrGate.assetName;
+    constructor(x: number, y: number) {
+        super(x, y, OrGate.type, OrGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

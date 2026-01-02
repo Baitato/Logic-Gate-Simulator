@@ -1,17 +1,21 @@
 import { Viewport } from "pixi-viewport";
-import { Application } from "pixi.js";
+import { ApplicationWrapper } from "./ApplicationWrapper";
+import { ViewportListener, ViewportPublisher } from "../observer/ViewportObserver";
 
 const worldWidth: number = 10000;
 const worldHeight: number = 10000;
 
-export class MyViewport extends Viewport {
-    public app: Application;
+export class ViewportWrapper extends Viewport implements ViewportPublisher {
+    public app: ApplicationWrapper;
+    static #instance: ViewportWrapper;
+    static #initialized = false;
+    private viewportListeners: ViewportListener[] = [];
     private edgeThreshold: number = 30; // Distance from edge to start panning (pixels)
     private panSpeed: number = 7; // Base panning speed (pixels per frame)
     private panDirection: { x: number; y: number } = { x: 0, y: 0 };
     private animationId: number | null = null;
 
-    constructor(app: Application) {
+    private constructor(app: ApplicationWrapper) {
         super({
             screenWidth: window.innerWidth,
             screenHeight: window.innerHeight,
@@ -22,8 +26,9 @@ export class MyViewport extends Viewport {
 
         this.app = app;
 
+        this.on("pointerdown", () => this.onViewportClick());
         window.addEventListener("resize", () => this.handleResize());
-        document.addEventListener("keydown", (event) => this.onSpaceKeyDown(event));
+        window.addEventListener("keydown", (event) => this.onKeyPress(event));
         window.addEventListener("mousemove", (event) => this.handleMouseMove(event));
         window.addEventListener("blur", () => this.stopPanning());
         document.addEventListener("mouseleave", () => this.stopPanning());
@@ -38,24 +43,48 @@ export class MyViewport extends Viewport {
         this.pinch().wheel().decelerate();
     }
 
-    resetViewport(): void {
+    public static async init(): Promise<void> {
+        if (this.#initialized) return;
+        const app = ApplicationWrapper.getInstance();
+        this.#instance = new ViewportWrapper(app);
+        this.#initialized = true;
+    }
+
+    public static getInstance(): ViewportWrapper {
+        if (!this.#instance) {
+            throw new Error('ViewportWrapper not initialized. Call init() first.');
+        }
+        return this.#instance;
+    }
+
+    public addViewportListener(listener: ViewportListener): void {
+        this.viewportListeners.push(listener);
+    }
+
+    private resetViewport(): void {
         this.moveCenter(0, 0);
         this.setZoom(1.25, true);
     }
 
-    handleResize(): void {
+    private handleResize(): void {
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
         this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
     }
 
-    onSpaceKeyDown(event: KeyboardEvent): void {
+    private onKeyPress(event: KeyboardEvent): void {
+        this.viewportListeners.forEach(listener => listener.onKeyPress(event));
+
         if (event.code === "Space") {
             this.resetViewport();
         }
     }
 
-    handleMouseMove(event: MouseEvent): void {
+    private onViewportClick(): void {
+        this.viewportListeners.forEach(listener => listener.onViewportClick());
+    }
+
+    private handleMouseMove(event: MouseEvent): void {
         // Stop panning if mouse is outside the window
         if (event.clientX < 0 || event.clientX > this.screenWidth || event.clientY < 0 || event.clientY > this.screenHeight) {
             this.stopPanning();

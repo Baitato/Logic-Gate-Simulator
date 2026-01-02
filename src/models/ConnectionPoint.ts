@@ -1,21 +1,21 @@
-import { Graphics, Point, FederatedPointerEvent } from 'pixi.js';
-import { viewport } from "../core/instances";
+import { Container, Point, Sprite } from 'pixi.js';
 import { ConnectionPointType } from "../enums/ConnectionPointType";
 import { Coordinate } from "../types/ICoordinate";
 import { Wire } from "./Wire";
-import { StateManager } from "../state/StateManager";
-import { WireUnplaced } from './WireUnplaced';
-import { unplacedWireState } from '../core/instances';
 import type { Placeable } from './Placeable';
+import { ViewportWrapper } from '../core/ViewportWrapper';
+import { ConnectionPointListener, ConnectionPointPublisher } from '../observer/ConnectionPointObserver';
+import { ConnectionService } from '../services/ConnectionService';
+import { getConnectionPointTexture } from '../utils/assetLoader';
 
-export class ConnectionPoint extends Graphics {
+export class ConnectionPoint extends Container implements ConnectionPointPublisher {
     type: ConnectionPointType;
     wires: Set<Wire> = new Set();
-    value: number | null = null;
-    parentPlaceable: Placeable;
-    index: number;
-
-    private readonly handlePointerDown = (event: FederatedPointerEvent) => this.onPointerDown(event);
+    parentPlaceable!: Placeable;
+    connectionPointListeners: ConnectionPointListener[] = [];
+    index: number; 
+    private sprite!: Sprite;
+    private readonly handlePointerDown = () => this.onPointerDown();
 
     constructor(type: ConnectionPointType, coordinate: Coordinate, parentPlaceable: Placeable, index: number) {
         super();
@@ -26,16 +26,25 @@ export class ConnectionPoint extends Graphics {
         this.index = index;
         this.zIndex = Infinity;
         this.render();
+
+        this.addConnectionPointListener(ConnectionService.getInstance());
+    }
+
+    public addConnectionPointListener(listener: ConnectionPointListener): void {
+        this.connectionPointListeners.push(listener);
     }
 
     public renderWire() {
         if (this.wires.size > 0) {
-            this.wires.forEach((wires) => wires.render());
+            for (const wire of this.wires) {
+                wire.render();
+            }
         }
     }
 
-    public getViewportPosition() {
-        return viewport.toLocal(this.getGlobalPosition(new Point(this.x, this.y)));
+    public getViewportPosition(viewport: ViewportWrapper): Point {
+        const pointData = viewport.toLocal(this.getGlobalPosition(new Point(this.x, this.y)));
+        return new Point(pointData.x, pointData.y);
     }
 
     public destroy() {
@@ -43,62 +52,30 @@ export class ConnectionPoint extends Graphics {
         super.destroy();
     }
 
-    public propagateValue(value: number) {
-        if (this.type === ConnectionPointType.INPUT) return;
-
-        this.wires.forEach((wire) => { wire.setValue(value); wire.render(); });
-    }
-
     private render() {
         this.eventMode = "static";
         this.cursor = "pointer";
 
-        this.on("pointerover", () => this.drawCircleOfRadius(4.5));
-        this.on("pointerout", () => this.drawCircleOfRadius(3));
+        this.sprite = new Sprite(getConnectionPointTexture(false));
+        this.sprite.anchor.set(0.5);
+        this.addChild(this.sprite);
+
+        this.on("pointerover", () => this.setHoverState(true));
+        this.on("pointerout", () => this.setHoverState(false));
         this.on("pointerdown", this.handlePointerDown);
-
-        this.drawCircleOfRadius(3);
     }
 
-    private drawCircleOfRadius(radius: number): void {
-        this.clear();
-        this.fill({ color: 0xffffff });
-        this.circle(0, 0, radius);
-        this.fill();
+    private setHoverState(hover: boolean): void {
+        this.sprite.texture = getConnectionPointTexture(hover);
     }
 
-    private onPointerDown(event: FederatedPointerEvent): void {
-        event.stopPropagation();
-
-        if (this.wires.size > 0 && this.type == ConnectionPointType.INPUT) {
-            this.resetStates();
-            return;
-        }
-
-        if (StateManager.activeConnectionPoint === null || unplacedWireState.selected === null) {
-            const wire = new WireUnplaced(this);
-            viewport.addChild(wire);
-            StateManager.activeConnectionPoint = this;
-        } else if (StateManager.activeConnectionPoint !== this && StateManager.activeConnectionPoint.type !== this.type) {
-            const wire = new Wire(StateManager.activeConnectionPoint, this);
-            this.wires.add(wire);
-            StateManager.activeConnectionPoint.wires.add(wire);
-            viewport.addChild(wire);
-            this.resetStates();
-        } else {
-            this.resetStates();
-        }
+    private onPointerDown(): void {
+        this.connectionPointListeners.forEach((listener) => {
+            listener.onConnectionPointClick(this);
+        });
     }
 
     public addWire(wire: Wire) {
         this.wires.add(wire);
-    }
-
-    private resetStates() {
-        StateManager.activeConnectionPoint = null;
-        if (unplacedWireState.selected)
-            viewport.removeChild(unplacedWireState.selected);
-        unplacedWireState.selected?.destroy();
-        unplacedWireState.selected = null;
     }
 }

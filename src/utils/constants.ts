@@ -12,4 +12,5 @@ export const getCellCenter = (x: number, y: number): Coordinate => {
         y: Math.floor(y / cellSize) * cellSize + cellSize / 2,
     };
 };
+
 export const CYAN = 0x40E0D0;

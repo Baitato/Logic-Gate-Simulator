@@ -1,24 +1,43 @@
-import { Application, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { cellSize } from "../utils/constants";
-import { MyViewport } from "./viewport";
+import { ViewportWrapper } from "./ViewportWrapper";
+import { ApplicationWrapper } from "./ApplicationWrapper";
 
 export class Grid extends Graphics {
-    viewport: MyViewport;
-    app: Application;
+    private viewport!: ViewportWrapper;
+    private app!: ApplicationWrapper;
+    static #instance: Grid;
+    static #initialized = false;
 
-    constructor(viewport: MyViewport) {
+    private constructor() {
         super();
         this.isRenderGroup = true;
         this.zIndex = -Infinity;
-        this.viewport = viewport;
-        this.app = viewport.app;
+    }
 
+    static async init(): Promise<void> {
+        if (this.#initialized) return;
+        this.#instance = new Grid();
+        this.#instance.setup();
+        this.#initialized = true;
+    }
+
+    static getInstance(): Grid {
+        if (!this.#instance) {
+            this.init();
+        }
+        return this.#instance;
+    }
+
+    private setup(): void {
+        this.viewport = ViewportWrapper.getInstance();
+        this.app = ApplicationWrapper.getInstance();
         this.app.ticker.add(() => {
             this.drawGrid();
         });
     }
 
-    scaleToZero(scale: number): number {
+    private scaleToZero(scale: number): number {
         const minScale = 0.25;
         const maxScale = 1.0;
 
@@ -27,7 +46,7 @@ export class Grid extends Graphics {
         return (scale - minScale) / (maxScale - minScale);
     }
 
-    drawGrid(): void {
+    private drawGrid(): void {
         this.clear();
 
         const startX = Math.floor(this.viewport.left / cellSize) * cellSize;

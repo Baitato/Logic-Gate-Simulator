@@ -7,16 +7,8 @@ export class AndGate extends Gate {
     static type: PlaceableType = PlaceableType.AND;
     static assetName: string = AssetName.AND;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, AndGate.type, rotation);
-    }
-
-    public override async setUp() {
-        return super.setUp(AndGate.assetName);
-    }
-
-    public static getAssetName(): string {
-        return AndGate.assetName;
+    constructor(x: number, y: number) {
+        super(x, y, AndGate.type, AndGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

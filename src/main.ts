@@ -1,107 +1,80 @@
-import { ApplicationWrapper } from './core/app';
-import { MyViewport } from './core/viewport';
-import { Grid } from './core/grid';
-import { Toolbox } from './tools/toolbox';
-import { simulationService } from './core/simulator/SimulationService';
-import { setAppInstance, setViewportInstance, setGridInstance, setToolboxInstance, setPlaceableStateInstance, setWireStateInstance, setUnplacedWireStateInstance, setTickRateMenuInstance, setRotationHandlerInstance, setSelectionServiceInstance, setCopyPasteServiceInstance, setImportServiceInstance } from './core/instances';
-import { StateManager } from './state/StateManager';
-import { PlaceableState } from './state/PlaceableState';
-import { WireState } from './state/WireState';
-import { UnplacedWireState } from './state/UnplacedWireState';
+import { ApplicationWrapper } from './core/ApplicationWrapper';
+import { ViewportWrapper } from './core/ViewportWrapper';
+import { Grid } from './core/Grid';
+import { Toolbox } from './tools/Toolbox';
 import { ClockTickRateMenu } from './tools/ClockTickRateMenu';
-import { RotationHandler } from './models/logic-gate/RotationHandler';
-import { SelectionService } from './services/SelectionService';
-import { CopyPasteService } from './services/CopyPasteService';
-import { ImportService } from './services/ImportService';
+import { SimulationService } from './core/simulator/SimulationService';
+import { getAssetNames, preloadAllAssets } from './utils/assetLoader';
+import { initializationPhases } from './core/AppInitializer';
+
+const loadingScreen = document.getElementById('loading-screen')!;
+const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
+const progressText = document.getElementById('progress-text')!;
+const errorContainer = document.getElementById('error-container')!;
+const errorMessage = document.getElementById('error-message')!;
+
+function getPercent(completed: number, total: number): number {
+    return Math.floor((completed / total) * 100);
+}
+
+function updateProgress(percent: number, text: string) {
+    progressBar.style.width = `${percent}%`;
+    progressText.textContent = text;
+}
+
+function showError(error: Error) {
+    errorContainer.style.display = 'block';
+    errorMessage.textContent = error.message + '\n\n' + error.stack;
+    console.error('Initialization failed:', error);
+}
 
 async function initializeApp() {
     try {
-        console.log('Initializing Logic Gate Simulator...');
+        const totalSteps = getAssetNames().length + initializationPhases.length;
+        let stepCount = 0;
 
-        const rotationHandler = await new RotationHandler().setupRotationHandler();
-        setRotationHandlerInstance(rotationHandler);
-
-        const tickRateMenu = await ClockTickRateMenu.create();
-        setTickRateMenuInstance(tickRateMenu);
-        console.log('Tick Rate Menu created');
-
-        // Initialize state instances first (before any models that need them)
-        setPlaceableStateInstance(new PlaceableState(simulationService, rotationHandler, tickRateMenu));
-        setWireStateInstance(new WireState());
-        setUnplacedWireStateInstance(new UnplacedWireState());
-        console.log('State instances created');
-
-        // Initialize app first
-        const app = await ApplicationWrapper.create();
-        setAppInstance(app);
-        console.log('App created');
-
-        // Initialize viewport
-        const viewport = new MyViewport(app);
-        setViewportInstance(viewport);
-        console.log('Viewport created');
-
-        // Initialize grid
-        const grid = new Grid(viewport);
-        setGridInstance(grid);
-        console.log('Grid created');
-
-        const importService = new ImportService();
-        setImportServiceInstance(importService);
-        console.log('Import service initialized');
-
-        // Initialize toolbox
-        const toolbox = await Toolbox.create();
-        setToolboxInstance(toolbox);
-        console.log('Toolbox created');
-
-        // Initialize state manager
-        StateManager.initialize();
-        console.log('State manager initialized');
-
-        const selectionService = new SelectionService(viewport);
-        setSelectionServiceInstance(selectionService);
-        console.log('Copy service initialized');
-
-        const copyPasteService = new CopyPasteService(importService, selectionService);
-        setCopyPasteServiceInstance(copyPasteService);
-        console.log('Selection service initialized');
-
-        window.addEventListener('keydown', (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'c') {
-                copyPasteService.copy();
-            }
+        updateProgress(0, 'Loading assets...');
+        await preloadAllAssets((current, total, assetName) => {
+            updateProgress(getPercent(++stepCount, totalSteps), `Loading assets... ${current}/${total} (${assetName})`);
         });
 
-        window.addEventListener('keydown', (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'v') {
-                const interaction = app.renderer.events;
-                const pos = interaction.pointer.global;
+        for (const step of initializationPhases) {
+            updateProgress(getPercent(++stepCount, totalSteps), `Initializing ${step.name}...`);
+            await step.init();
+        }
 
-                copyPasteService.paste(pos);
-            }
-        });
+        updateProgress(100, 'Initialization complete!');
 
-        // Assemble the scene
+        const app = ApplicationWrapper.getInstance();
+        const viewport = ViewportWrapper.getInstance();
+        const grid = Grid.getInstance();
+        const toolbox = Toolbox.getInstance();
+        const tickRateMenu = ClockTickRateMenu.getInstance();
+        const simulationService = SimulationService.getInstance();
+
         document.body.appendChild(app.canvas);
         app.stage.addChild(viewport);
         app.stage.addChild(toolbox);
         app.stage.addChild(tickRateMenu);
         viewport.addChild(grid);
 
+        let isIterating = false;
+
         app.ticker.add(() => {
-            simulationService.nextIteration();
+            if (isIterating) return;
+            isIterating = true;
+
+            simulationService.nextIteration()
+                .then(() => isIterating = false);
         });
 
-        console.log('Logic Gate Simulator initialized successfully');
         console.log('Renderer:', app.renderer.name);
+
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 150);
     } catch (error) {
-        console.error('Failed to initialize Logic Gate Simulator:', error);
-        document.body.innerHTML = `<div style="color: white; padding: 20px; font-family: monospace;">
-            <h2>Error initializing application</h2>
-            <p>${error instanceof Error ? error.message : String(error)}</p>
-            <p>Check console for details.</p>
-        </div>`;
+        showError(error instanceof Error ? error : new Error(String(error)));
     }
 }
 

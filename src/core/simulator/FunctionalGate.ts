@@ -1,8 +1,8 @@
 import { PlaceableType } from "../../enums/PlaceableType"
 import { Bulb } from "../../models/Bulb";
-import { StateManager } from "../../state/StateManager";
-
-export type Value = number | undefined;
+import { Placeable } from "../../models/Placeable";
+import { StorageManager } from "../../state/StateManager";
+import { Value } from "../../types/IValue";
 
 export class FunctionalGate {
     type: PlaceableType;
@@ -50,21 +50,20 @@ export class FunctionalGate {
         }
     }
 
-    evaluateClock(): Value {
-        const curTick = StateManager.currentTick % (2 * this.tickRate!);
+    private evaluateClock(): Value {
+        const curTick = StorageManager.currentTick % (2 * this.tickRate!);
         return (curTick < this.tickRate!) ? 0 : 1;
     }
 
-    evaluateBulb(netList: Map<number, Value>): Value {
-        const bulb = StateManager.placeableById.get(this.gateId);
+    private evaluateBulb(netList: Map<number, Value>): Value {
+        const bulb = Placeable.placeableById.get(this.gateId) as Bulb;
 
-        if (bulb && bulb instanceof Bulb)
-            bulb.switch(this.hasOne(netList) ? 1 : 0);
+        bulb.switch(this.hasOne(netList) ? 1 : 0);
 
         return undefined;
     }
 
-    evaluateXor(netList: Map<number, Value>): Value {
+    private evaluateXor(netList: Map<number, Value>): Value {
         let onesCount = 0;
         let hasUndefined = false;
 
@@ -82,7 +81,7 @@ export class FunctionalGate {
         return onesCount % 2 === 1 ? 1 : 0;
     }
 
-    evaluateXnor(netList: Map<number, Value>): Value {
+    private evaluateXnor(netList: Map<number, Value>): Value {
         const xorResult = this.evaluateXor(netList);
 
         if (xorResult === undefined) return undefined;
@@ -90,7 +89,7 @@ export class FunctionalGate {
         return xorResult === 1 ? 0 : 1;
     }
 
-    hasZero(netList: Map<number, Value>): boolean {
+    private hasZero(netList: Map<number, Value>): boolean {
         for (const input of this.inputs) {
             if (netList.get(input) === 0) {
                 return true;
@@ -99,7 +98,7 @@ export class FunctionalGate {
         return false;
     }
 
-    hasOne(netList: Map<number, Value>): boolean {
+    private hasOne(netList: Map<number, Value>): boolean {
         for (const input of this.inputs) {
             if (netList.get(input) === 1) {
                 return true;
@@ -108,7 +107,7 @@ export class FunctionalGate {
         return false;
     }
 
-    getOrDefault(netList: Map<number, Value>, def: Value): Value {
+    private getOrDefault(netList: Map<number, Value>, def: Value): Value {
         let undef = true;
 
         for (const input of this.inputs) {

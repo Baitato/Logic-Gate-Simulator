@@ -1,7 +1,7 @@
 import { AssetName } from "../enums/AssetName";
-import { clearAll, } from "../services/viewport/positionService";
 import { MiscTool } from "./MiscTool";
 import { ImportService } from '../services/ImportService';
+import PositionService from '../services/PositionService';
 
 export class ImportTool extends MiscTool {
     private importService: ImportService;
@@ -28,8 +28,8 @@ export class ImportTool extends MiscTool {
                     const lines = content.split('\n');
 
                     this.importService.import(lines);
+                    PositionService.clearAll();
                 };
-                clearAll();
             }
         });
     }

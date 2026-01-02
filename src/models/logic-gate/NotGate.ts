@@ -7,16 +7,8 @@ export class NotGate extends Gate {
     static type: PlaceableType = PlaceableType.NOT;
     static assetName: string = AssetName.NOT;
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, NotGate.type, rotation);
-    }
-
-    public override async setUp() {
-        return super.setUp(NotGate.assetName);
-    }
-
-    public static getAssetName(): string {  
-        return NotGate.assetName;
+    constructor(x: number, y: number) {
+        super(x, y, NotGate.type, NotGate.assetName);
     }
 
     protected override getInputPoints(): Coordinate[] {

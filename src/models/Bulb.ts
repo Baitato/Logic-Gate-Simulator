@@ -1,13 +1,11 @@
 import { Sprite } from "pixi.js";
 import { PlaceableType } from "../enums/PlaceableType";
 import { Placeable } from "./Placeable";
-import { ConnectionPoint } from "./ConnectionPoint";
-import { placeableState } from "../core/instances";
 import { Coordinate } from "../types/ICoordinate";
-import { loadSprite } from "../utils/assetLoader";
-import { Value } from "../core/simulator/FunctionalGate";
+import { createSprite } from "../utils/assetLoader";
 import { Dimension } from "../types/IDimension";
 import { AssetName } from "../enums/AssetName";
+import { Value } from "../types/IValue";
 
 const dimensions: Dimension = { x: 50, y: 50 };
 
@@ -16,13 +14,15 @@ export class Bulb extends Placeable {
     static assetName: string = AssetName.BULB_OFF;
     static onAssetName: string = AssetName.BULB_ON;
     onSprite?: Sprite | undefined;
-    inputPoints: ConnectionPoint[] = [];
-    outputPoints: ConnectionPoint[] = [];
 
-    constructor(x: number, y: number, rotation: number = 0) {
-        super(x, y, rotation);
+    constructor(x: number, y: number) {
+        super(x, y, Bulb.assetName);
 
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
+        this.onSprite = createSprite(Bulb.onAssetName, dimensions);
+        this.addChild(this.onSprite);
+        this.onSprite.visible = false;
+
+        this.addConnectionPoints();
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -31,17 +31,6 @@ export class Bulb extends Placeable {
 
     protected override getOutputPoints(): Coordinate[] {
         return [];
-    }
-
-    public override async setUp(): Promise<Bulb> {
-        super.setUp(Bulb.assetName);
-
-        this.onSprite = await loadSprite(Bulb.onAssetName, dimensions);
-        this.addChild(this.onSprite);
-        this.onSprite.visible = false;
-
-        this.addConnectionPoints();
-        return this;
     }
 
     public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {

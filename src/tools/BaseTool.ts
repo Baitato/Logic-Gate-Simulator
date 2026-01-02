@@ -1,5 +1,5 @@
 import { Sprite } from "pixi.js";
-import { loadTexture } from "../utils/assetLoader";
+import { getPreloadedTexture } from "../utils/assetLoader";
 import { Dimension } from "../types/IDimension";
 
 const iconDimensions: Dimension = { x: 50, y: 50 };
@@ -17,8 +17,6 @@ export class BaseTool extends Sprite {
     }
 
     setTexture(texture: string) {
-        loadTexture(texture).then((texture) => {
-            this.texture = texture;
-        });
+        this.texture = getPreloadedTexture(texture);
     }
 }

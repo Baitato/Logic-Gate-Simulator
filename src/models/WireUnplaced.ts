@@ -1,13 +1,15 @@
 import { FederatedPointerEvent, Graphics, Point } from "pixi.js";
 import { ConnectionPoint } from './ConnectionPoint';
-import { viewport, unplacedWireState } from "../core/instances";
-import { StateManager } from "../state/StateManager";
+import { ViewportWrapper } from "../core/ViewportWrapper";
+import { UnplacedWireListener, UnplacedWirePublisher } from "../observer/UnplacedWireObserver";
+import { ConnectionService } from "../services/ConnectionService";
 
-export class WireUnplaced extends Graphics {
-    endPoint: ConnectionPoint | null = null;
+export class WireUnplaced extends Graphics implements UnplacedWirePublisher {
+    private viewport!: ViewportWrapper;
+    private unplacedWireListeners: UnplacedWireListener[] = [];
     startPoint: ConnectionPoint;
 
-    private readonly handlePointerDown = () => this.onClick();
+    private readonly handlePointerDown = (event: FederatedPointerEvent) => this.onClick(event);
     private readonly handlePointerMove = (event: FederatedPointerEvent) => this.followPointer(event);
 
     constructor(sourcePoint: ConnectionPoint) {
@@ -15,19 +17,27 @@ export class WireUnplaced extends Graphics {
         this.zIndex = -Infinity;
         this.startPoint = sourcePoint;
         this.eventMode = "none";
-        const sourcePos: Point = sourcePoint.getViewportPosition();
-        this.position.set(sourcePos.x, sourcePos.y);
-        unplacedWireState.selected = this;
+        this.create();
+        this.addUnplacedWireListener(ConnectionService.getInstance());
+    }
 
-        viewport.on("pointermove", this.handlePointerMove, this);
+    public addUnplacedWireListener(listener: UnplacedWireListener): void {
+        this.unplacedWireListeners.push(listener);
+    }
+
+    private create(): void {
+        this.viewport = ViewportWrapper.getInstance();
+        const sourcePos: Point = this.startPoint.getViewportPosition(this.viewport);
+        this.position.set(sourcePos.x, sourcePos.y);
+        this.viewport.on("pointermove", this.handlePointerMove, this);
     }
 
     private followPointer(event: FederatedPointerEvent): void {
         this.clear();
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        viewport.once("pointerdown", this.handlePointerDown, this);
+        this.viewport.off("pointerdown", this.handlePointerDown, this);
+        this.viewport.once("pointerdown", this.handlePointerDown, this);
 
-        const globalPos: Point = viewport.toWorld(event.global);
+        const globalPos: Point = this.viewport.toWorld(event.global);
         const localPos: Point = new Point(
             globalPos.x - this.position.x,
             globalPos.y - this.position.y
@@ -38,8 +48,10 @@ export class WireUnplaced extends Graphics {
             .stroke({ color: 0xffffff, width: 2 });
     }
 
-    private onClick(): void {
-        this.destroy();
+    private onClick(event: FederatedPointerEvent): void {
+        this.unplacedWireListeners.forEach((listener) => {
+            listener.onUnplacedWireClick(event);
+        });
     }
 
     public destroy(): void {
@@ -52,9 +64,7 @@ export class WireUnplaced extends Graphics {
     }
 
     private defaultStates() {
-        viewport.off("pointermove", this.handlePointerMove, this);
-        viewport.off("pointerdown", this.handlePointerDown, this);
-        unplacedWireState.selected = null;
-        StateManager.activeConnectionPoint = null;
+        this.viewport.off("pointermove", this.handlePointerMove, this);
+        this.viewport.off("pointerdown", this.handlePointerDown, this);
     }
 }

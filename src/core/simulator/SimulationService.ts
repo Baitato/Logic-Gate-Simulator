@@ -1,22 +1,32 @@
 import { PlaceableType } from '../../enums/PlaceableType';
-import { StateManager } from '../../state/StateManager';
+import { StorageManager } from '../../state/StateManager';
 import { getCondensedGraph } from './condensedGraph';
-import { FunctionalGate, type Value } from './FunctionalGate';
+import { FunctionalGate } from './FunctionalGate';
 import { Clock } from '../../models/Clock';
 import { Placeable } from '../../models/Placeable';
 import { Switch } from '../../models/Switch';
 import { Wire } from '../../models/Wire';
+import { Value } from '../../types/IValue';
 
 export class SimulationService {
+    static #instance: SimulationService;
+    private MAX_TICKS: number = 4000;
     public wires: Map<number, Wire> = new Map();
     public gates: Map<number, FunctionalGate> = new Map();
     public adjacencyList: Map<number, Set<number>> = new Map();
     public netList: Map<number, Value> = new Map();
     static cnt = 0;
 
-    constructor() { }
+    private constructor() { }
 
-    public nextIteration(): void {
+    static getInstance(): SimulationService {
+        if (!this.#instance) {
+            this.#instance = new SimulationService();
+        }
+        return this.#instance;
+    }
+
+    public async nextIteration(): Promise<void> {
         const condensedSccGraph = getCondensedGraph(this.adjacencyList);
 
         for (const scc of condensedSccGraph) {
@@ -60,7 +70,7 @@ export class SimulationService {
             }
         }
 
-        StateManager.nextTick();
+        this.nextTick();
     }
 
     public flipSwitch(switchId: number): void {
@@ -73,11 +83,11 @@ export class SimulationService {
     }
 
     private setOutputValues(gate: FunctionalGate, newValue: Value): void {
-        gate.outputs.forEach(outputWireId => {
+        for (const outputWireId of gate.outputs) {
             this.netList.set(outputWireId, newValue);
             const outputWire = this.wires.get(outputWireId)!;
             outputWire.setValue(newValue);
-        });
+        }
         gate.value = newValue;
     }
 
@@ -121,6 +131,10 @@ export class SimulationService {
     }
 
     public deleteEdge(wire: Wire): void {
+        if (!this.wires.has(wire.wireId)) {
+            return; // Wire was never added to SimulationService
+        }
+
         this.wires.delete(wire.wireId);
 
         const source = wire.source;
@@ -182,7 +196,12 @@ export class SimulationService {
             return (gate as Clock).getTickRate();
         }
     }
-}
 
-export const simulationService = new SimulationService();
+    private nextTick(): number {
+        StorageManager.currentTick += 1;
+        StorageManager.currentTick %= this.MAX_TICKS;
+
+        return StorageManager.currentTick;
+    }
+}
 

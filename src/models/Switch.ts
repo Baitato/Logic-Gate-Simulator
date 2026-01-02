@@ -1,12 +1,9 @@
 import { Graphics, Sprite } from "pixi.js";
 import { Coordinate } from "../types/ICoordinate";
-import { ConnectionPoint } from "./ConnectionPoint";
 import { Placeable } from "./Placeable";
 import { Dimension } from "../types/IDimension";
-import { loadSprite } from "../utils/assetLoader";
+import { createSprite } from "../utils/assetLoader";
 import { PlaceableType } from "../enums/PlaceableType";
-import { simulationService } from "../core/simulator/SimulationService";
-import { placeableState } from "../core/instances";
 import { AssetName } from "../enums/AssetName";
 
 const dimensions: Dimension = { x: 50, y: 50 };
@@ -16,15 +13,22 @@ export class Switch extends Placeable {
     static onAssetName: string = AssetName.SWITCH_ON;
     static assetName: string = AssetName.SWITCH_OFF;
     onSprite?: Sprite | undefined;
-    outputPoints: ConnectionPoint[] = [];
-    inputPoints: ConnectionPoint[] = [];
     isOn: boolean = false;
 
-    constructor(x: number, y: number, rotation: number = 0, isOn: boolean = false) {
-        super(x, y, rotation);
-        this.isOn = isOn;
+    constructor(x: number, y: number) {
+        super(x, y, Switch.assetName);
 
-        this.on("pointerdown", (event) => placeableState.onSelect(event, this));
+        this.onSprite = createSprite(Switch.onAssetName, dimensions);
+        this.addChild(this.onSprite);
+
+        this.render();
+        this.addClickableArea();
+    }
+
+    public setIsOn(isOn: boolean): Switch {
+        this.isOn = isOn;
+        this.render();
+        return this;
     }
 
     protected override getInputPoints(): Coordinate[] {
@@ -33,17 +37,6 @@ export class Switch extends Placeable {
 
     protected override getOutputPoints(): Coordinate[] {
         return [{ x: 25, y: 0 }];
-    }
-
-    public override async setUp(): Promise<Switch> {
-        super.setUp(Switch.assetName);
-
-        this.onSprite = await loadSprite(Switch.onAssetName, dimensions);
-        this.addChild(this.onSprite);
-
-        this.render();
-        this.addClickableArea();
-        return this;
     }
 
     public override exportAsString(offsetX: number = 0, offsetY: number = 0): string {
@@ -67,7 +60,7 @@ export class Switch extends Placeable {
 
         this.render();
 
-        simulationService.flipSwitch(this.placeableId);
+        this.simulationService.flipSwitch(this.placeableId);
     }
 
     private render() {

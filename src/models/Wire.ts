@@ -1,32 +1,37 @@
-import { Graphics } from "pixi.js";
+import { FederatedPointerEvent, Graphics } from "pixi.js";
 import { ConnectionPointType } from "../enums/ConnectionPointType";
-import { StateManager } from "../state/StateManager";
-import { simulationService } from "../core/simulator/SimulationService";
-import { wireState } from "../core/instances";
-import { CYAN } from "../utils/constants";
 import type { ConnectionPoint } from './ConnectionPoint';
 import type { Placeable } from "./Placeable";
-import type { Value } from "../core/simulator/FunctionalGate";
+import { SimulationService } from "../core/simulator/SimulationService";
+import { Value } from "../types/IValue";
+import { ViewportWrapper } from "../core/ViewportWrapper";
+import { WireListener, WirePublisher } from '../observer/WireObserver';
+import { DeletionService } from "../services/DeletionService";
+import { CYAN } from "../utils/constants";
 
-export class Wire extends Graphics {
-    targetPoint: ConnectionPoint;
-    sourcePoint: ConnectionPoint;
-    source: Placeable;
-    target: Placeable;
-    wireId!: number;
+export class Wire extends Graphics implements WirePublisher {
+    public targetPoint: ConnectionPoint;
+    public sourcePoint: ConnectionPoint;
+    public source: Placeable;
+    public target: Placeable;
+    public wireId!: number;
+    public selected: boolean = false;
 
+    public static wireById: Map<number, Wire> = new Map<number, Wire>();
+
+    private viewport: ViewportWrapper;
     private value: Value;
 
-    constructor(sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, id?: number) {
+    private static wireListeners: WireListener[] = [];
+    constructor(sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, viewport: ViewportWrapper) {
         super();
         this.zIndex = -Infinity;
         this.sourcePoint = sourcePoint;
         this.targetPoint = targetPoint;
+        this.viewport = viewport;
 
         this.cursor = "pointer";
         this.eventMode = "static";
-
-        this.setWireId(id);
 
         if (sourcePoint.type === ConnectionPointType.INPUT) {
             [this.sourcePoint, this.targetPoint] = [this.targetPoint, this.sourcePoint];
@@ -37,21 +42,39 @@ export class Wire extends Graphics {
         this.source = this.sourcePoint.parentPlaceable;
         this.target = this.targetPoint.parentPlaceable;
 
-        StateManager.wireById.set(this.wireId, this);
+        this.on("pointerdown", (event) => this.onPointerDown(event));
+        Wire.wireListeners.push(DeletionService.getInstance());
+    }
 
-        simulationService.addEdge(this);
+    public addWireListener(listener: WireListener): void {
+        if (!Wire.wireListeners.includes(listener))
+            Wire.wireListeners.push(listener);
+    }
+
+    private onPointerDown(event: FederatedPointerEvent): void {
+        event.stopPropagation();
+        Wire.wireListeners.forEach((listener) => {
+            listener.onWireClick(this);
+        });
+    }
+
+    public saveWire(): Wire {
+        this.setWireId();
+        SimulationService.getInstance().addEdge(this);
         this.render();
-
-        this.on("pointerdown", (event) => wireState.onSelect(event, this));
+        return this;
     }
 
     public destroy(): void {
         this.targetPoint.wires.delete(this);
         this.sourcePoint.wires.delete(this);
 
-        simulationService.deleteEdge(this);
+        // Only remove from SimulationService if the wire was saved (has an ID)
+        if (this.wireId !== undefined) {
+            SimulationService.getInstance().deleteEdge(this);
+            Wire.wireById.delete(this.wireId);
+        }
 
-        StateManager.wireById.delete(this.wireId);
         super.destroy();
     }
 
@@ -86,40 +109,37 @@ export class Wire extends Graphics {
                 color = RED;
         }
 
-        this.clear();
+        if (this.selected) {
+            color = CYAN;
+        }
+
         this.drawLine(color);
     }
 
     public drawLine(color: number): void {
-        const sourcePos = this.sourcePoint.getViewportPosition();
-        const targetPos = this.targetPoint.getViewportPosition();
+        this.clear();
+        const sourcePos = this.sourcePoint.getViewportPosition(this.viewport);
+        const targetPos = this.targetPoint.getViewportPosition(this.viewport);
 
         this.position.set(0, 0);
-
-        if (wireState.selected === this) {
-            color = CYAN;
-        }
 
         this.moveTo(sourcePos.x, sourcePos.y)
             .lineTo(targetPos.x, targetPos.y)
             .stroke({ color: color, width: 2 });
     }
 
-    private setWireId(id?: number): void {
-        if (StateManager.wireById.has(this.wireId)) {
-            console.warn(`Wire ID ${this.wireId} is already in use.`);
-            this.wireId = -1;
-            return;
-        }
-
-        if (id === undefined) {
-            this.wireId = StateManager.wireIdCounter++;
-            StateManager.wireById.set(this.wireId, this);
-        } else {
-            this.wireId = id;
-            StateManager.wireById.set(id, this);
-            StateManager.wireIdCounter = Math.max(StateManager.wireIdCounter, id + 1);
-        }
+    private setWireId(): void {
+        this.wireId = Wire.generateWireId();
+        Wire.wireById.set(this.wireId, this);
     }
 
+    private static generateWireId(): number {
+        let cur = Math.floor(Math.random() * 0x100000000);
+
+        while (Wire.wireById.has(cur)) {
+            cur = Math.floor(Math.random() * 0x100000000);
+        }
+
+        return cur;
+    }
 }
