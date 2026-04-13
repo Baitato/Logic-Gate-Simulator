@@ -1,4 +1,0 @@
-
-export enum ToolType {
-    GATE
-};
